@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cart - FemiFresh</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="brand" href="/index.html">
+      <img src="/images/femifresh-logo-source.jpg" alt="FemiFresh Logo">
+      <span>FemiFresh</span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="/index.html">Home</a>
+      <a href="/products.html">Products</a>
+      <a href="/policies.html">Policies</a>
+      <a href="/contact.html">Contact</a>
+      <a class="cart-pill" href="/cart.html">Cart (<span data-cart-count>0</span>)</a>
+    </nav>
+    <button class="menu-btn" id="menuBtn" type="button">☰</button>
+  </div>
+</header>
+
+<main>
+  <section class="page-hero small-hero">
+    <div class="container">
+      <p class="eyebrow">SHOPPING CART</p>
+      <h1>Your FemiFresh Cart</h1>
+      <p>Review your selected items, update quantities and continue to secure checkout.</p>
+    </div>
+  </section>
+
+  <section class="container shop-layout">
+    <div class="shop-main">
+      <div class="section-head">
+        <h2>Cart Items</h2>
+        <button class="ghost-btn" onclick="clearCartFlow()">Clear cart</button>
+      </div>
+      <div id="cartItems"></div>
+    </div>
+
+    <aside class="shop-side">
+      <div class="summary-card">
+        <h3>Order Summary</h3>
+        <div id="cartSummary"></div>
+        <div class="summary-actions">
+          <a class="primary-btn full-btn" href="/checkout.html">Proceed to Checkout</a>
+          <a class="secondary-btn full-btn" href="/products.html">Continue Shopping</a>
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<script src="/js/store.js"></script>
+<script src="/js/mobile-header-fix.js"></script>
+</body>
+</html>

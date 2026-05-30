@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - FemiFresh Admin</title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="sidebar">
+    <h2>FemiFresh</h2>
+    <a href="/admin/dashboard.html">Dashboard</a>
+    <a href="/admin/orders.html">Orders</a>
+    <a href="/admin/products.html" data-super-only>Products</a>
+    <a href="/admin/delivery.html" data-super-only>Delivery</a>
+    <a href="/admin/users.html" data-super-only>Users</a>
+    <a href="/admin/logs.html" data-super-only>Logs</a>
+    <a href="/admin/settings.html" data-super-only>Settings</a>
+    <button id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div>
+        <p class="muted">Super Admin Only</p>
+        <h1>Website Settings</h1>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2>Contact Information</h2>
+      <p class="muted">This information updates the public Contact page automatically.</p>
+
+      <form id="settingsForm" class="admin-form">
+        <label>Email
+          <input name="contact_email" type="email" placeholder="info@femifresh.co.za">
+        </label>
+
+        <label>Phone
+          <input name="contact_phone" type="text" placeholder="+27 00 000 0000">
+        </label>
+
+        <label>WhatsApp Number
+          <input name="contact_whatsapp" type="text" placeholder="+27 00 000 0000">
+        </label>
+
+        <label>Address / Area
+          <input name="contact_address" type="text" placeholder="South Africa">
+        </label>
+
+        <label>Business Hours
+          <input name="business_hours" type="text" placeholder="Monday to Saturday, 08:00 - 17:00">
+        </label>
+
+        <label>Facebook URL
+          <input name="facebook_url" type="url" placeholder="https://facebook.com/...">
+        </label>
+
+        <label>Instagram URL
+          <input name="instagram_url" type="url" placeholder="https://instagram.com/...">
+        </label>
+
+        <label>TikTok URL
+          <input name="tiktok_url" type="url" placeholder="https://tiktok.com/@...">
+        </label>
+
+        <button class="primary" type="submit">Save Settings</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<script src="/admin/js/admin.js"></script>
+<script>
+async function loadSettings() {
+  const token = localStorage.getItem("femifresh_admin_token");
+  const res = await fetch("/api/admin/settings", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (res.status === 403) {
+    alert("Only Super Admin can access settings.");
+    window.location.href = "/admin/orders.html";
+    return;
+  }
+
+  const data = await res.json();
+  const s = data.settings || {};
+
+  document.querySelectorAll("#settingsForm [name]").forEach(input => {
+    input.value = s[input.name] || "";
+  });
+}
+
+document.getElementById("settingsForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const token = localStorage.getItem("femifresh_admin_token");
+  const body = {};
+  new FormData(e.target).forEach((value, key) => body[key] = value);
+
+  const res = await fetch("/api/admin/settings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Settings saved successfully.");
+  } else {
+    alert(data.message || "Failed to save settings.");
+  }
+});
+
+loadSettings();
+</script>
+</body>
+</html>

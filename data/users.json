@@ -1,0 +1,18 @@
+[
+  {
+    "id": "af4b4d7e-969b-46fc-994d-1153bb01b1ad",
+    "name": "Rendani Tshidada",
+    "email": "admin@femifresh.local",
+    "role": "super_admin",
+    "passwordHash": "$2a$10$JnHzJtYeJB6SCi9nMmifJeJctDNpLUo8CKFXyfDxDGHHs6M8UMiI6",
+    "createdAt": "2026-05-29T14:17:39.091Z"
+  },
+  {
+    "id": "1b6a6140-fe17-446f-97d1-b4ea57d53eba",
+    "name": "Orders Admin",
+    "email": "orders@femifresh.local",
+    "role": "orders_admin",
+    "passwordHash": "$2a$10$8SdK5iKCOc7kHzeePn6OT.FP7t7FQYHAGBrXjhlltr6u93pu/uhxi",
+    "createdAt": "2026-05-29T14:17:39.091Z"
+  }
+]

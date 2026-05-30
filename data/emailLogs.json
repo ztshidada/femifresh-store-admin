@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1780149308722",
+    "createdAt": "2026-05-30T13:55:08.722Z",
+    "to": "ADMIN_NOTIFY_EMAIL not set",
+    "subject": "New FemiFresh order FF-202605-0001",
+    "status": "logged_only"
+  },
+  {
+    "id": "1780149308722",
+    "createdAt": "2026-05-30T13:55:08.722Z",
+    "to": "ztshidada@gmail.com",
+    "subject": "FemiFresh order FF-202605-0001 - received",
+    "status": "logged_only",
+    "html": "<h2>Thank you for your FemiFresh order</h2><p>Order: <b>FF-202605-0001</b></p><p>Status: <b>pending</b></p><p>Total: <b>R1060</b></p>",
+    "text": "Thank you for your FemiFresh order FF-202605-0001. Status: pending. Total: R1060"
+  }
+]

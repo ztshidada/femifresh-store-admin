@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Thank You - FemiFresh</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="brand" href="/index.html">
+      <img src="/images/femifresh-logo-source.jpg" alt="FemiFresh Logo">
+      <span>FemiFresh</span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="/index.html">Home</a>
+      <a href="/products.html">Products</a>
+      <a href="/policies.html">Policies</a>
+      <a href="/contact.html">Contact</a>
+      <a class="cart-pill" href="/cart.html">Cart (<span data-cart-count>0</span>)</a>
+    </nav>
+    <button class="menu-btn" id="menuBtn" type="button">☰</button>
+  </div>
+</header>
+
+<main>
+  <section class="page-hero small-hero">
+    <div class="container">
+      <p class="eyebrow">ORDER CONFIRMED</p>
+      <h1>Thank You for Your Order</h1>
+      <p>Your FemiFresh order has been received successfully.</p>
+    </div>
+  </section>
+
+  <section class="container thankyou-wrap">
+    <div class="thankyou-card">
+      <div class="success-badge">✓</div>
+      <h2>Order Received</h2>
+      <p class="muted center-text">Thank you for shopping with FemiFresh. We have received your order and our team will begin processing it.</p>
+
+      <div class="order-meta">
+        <div class="meta-box">
+          <span>Order Number</span>
+          <strong id="thankOrderNumber">Loading...</strong>
+        </div>
+        <div class="meta-box">
+          <span>Payment Status</span>
+          <strong id="thankPaymentStatus">Pending</strong>
+        </div>
+      </div>
+
+      <div class="thank-summary" id="thankOrderSummary"></div>
+
+      <div class="thank-note">
+        A confirmation email may be sent to you after the order is processed. If you need help, please contact the FemiFresh support team.
+      </div>
+
+      <div class="thank-actions">
+        <a class="primary-btn" href="/index.html">Back Home</a>
+        <a class="secondary-btn" href="/products.html">Shop More</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/js/store.js"></script>
+<script src="/js/mobile-header-fix.js"></script>
+</body>
+</html>

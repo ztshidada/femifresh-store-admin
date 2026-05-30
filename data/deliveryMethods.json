@@ -1,0 +1,23 @@
+[
+  {
+    "id": "62aaaf77-7654-409e-b1d0-d9486a369dd7",
+    "name": "Collection",
+    "price": 0,
+    "active": true,
+    "description": "Customer collects from agreed location"
+  },
+  {
+    "id": "1e9bebb0-5d55-4535-bf72-6543c7e8745b",
+    "name": "Paxi",
+    "price": 60,
+    "active": true,
+    "description": "Paxi delivery"
+  },
+  {
+    "id": "d5416ee3-9294-4b71-80fa-0146b220c8fd",
+    "name": "Courier",
+    "price": 100,
+    "active": true,
+    "description": "Door-to-door courier"
+  }
+]

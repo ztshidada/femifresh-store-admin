@@ -1,0 +1,35 @@
+[
+  {
+    "id": "6b0cf8c9-75f3-48d5-8f48-66e81a64a2a1",
+    "orderNumber": "FF-202605-0001",
+    "customer": {
+      "name": "Rendani Tshidada",
+      "phone": "0647610299",
+      "email": "ztshidada@gmail.com",
+      "address": "Zambezi minor life style estate\n127 Khalo street"
+    },
+    "items": [
+      {
+        "productId": "c0b2094f-e853-43b6-be7c-6bc9830f0ed8",
+        "name": "FemiFresh Starter Business Pack",
+        "price": 1000,
+        "qty": 1,
+        "subtotal": 1000
+      }
+    ],
+    "subtotal": 1000,
+    "delivery": {
+      "id": "1e9bebb0-5d55-4535-bf72-6543c7e8745b",
+      "name": "Paxi",
+      "price": 60
+    },
+    "total": 1060,
+    "referralCode": "",
+    "paymentMethod": "yoco",
+    "paymentStatus": "pending",
+    "fulfillmentStatus": "new",
+    "notes": [],
+    "createdAt": "2026-05-30T13:55:08.720Z",
+    "updatedAt": "2026-05-30T13:55:08.720Z"
+  }
+]
