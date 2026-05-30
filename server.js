@@ -20,6 +20,106 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 function money(n) { return Number(n || 0); }
+
+function getAppUrl(req) {
+  return (process.env.APP_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+}
+
+function cents(amount) {
+  return Math.round(Number(amount || 0) * 100);
+}
+
+function yocoHeaders() {
+  const key = process.env.YOCO_SECRET_KEY || "";
+  return {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + key
+  };
+}
+
+async function createYocoCheckout(order, req) {
+  if (!process.env.YOCO_SECRET_KEY) {
+    return {
+      success: false,
+      mode: "missing_key",
+      checkoutUrl: `/thank-you.html?order=${order.orderNumber}`
+    };
+  }
+
+  const appUrl = getAppUrl(req);
+
+  const body = {
+    amount: cents(order.total),
+    currency: "ZAR",
+    successUrl: `${appUrl}/thank-you.html?order=${encodeURIComponent(order.orderNumber)}&payment=success`,
+    cancelUrl: `${appUrl}/checkout.html?order=${encodeURIComponent(order.orderNumber)}&payment=cancelled`,
+    failureUrl: `${appUrl}/checkout.html?order=${encodeURIComponent(order.orderNumber)}&payment=failed`,
+    metadata: {
+      orderNumber: order.orderNumber,
+      orderId: order.id,
+      customerEmail: order.customer.email,
+      customerName: order.customer.name || ""
+    }
+  };
+
+  const response = await fetch("https://payments.yoco.com/api/checkouts", {
+    method: "POST",
+    headers: yocoHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    return {
+      success: false,
+      mode: "yoco_error",
+      status: response.status,
+      error: data,
+      checkoutUrl: `/thank-you.html?order=${order.orderNumber}`
+    };
+  }
+
+  const redirectUrl =
+    data.redirectUrl ||
+    data.redirect_url ||
+    data.checkoutUrl ||
+    data.checkout_url ||
+    data.url;
+
+  return {
+    success: true,
+    data,
+    checkoutUrl: redirectUrl || `/thank-you.html?order=${order.orderNumber}`
+  };
+}
+
+function extractYocoRefs(event) {
+  const refs = [
+    event?.metadata?.orderNumber,
+    event?.payload?.metadata?.orderNumber,
+    event?.data?.metadata?.orderNumber,
+    event?.data?.object?.metadata?.orderNumber,
+    event?.object?.metadata?.orderNumber,
+    event?.orderNumber
+  ].filter(Boolean);
+
+  return [...new Set(refs)];
+}
+
+function isYocoPaidEvent(event) {
+  const text = JSON.stringify(event || {}).toLowerCase();
+
+  return (
+    text.includes("payment.succeeded") ||
+    text.includes("payment_succeeded") ||
+    text.includes("checkout.succeeded") ||
+    text.includes("checkout_succeeded") ||
+    text.includes('"status":"succeeded"') ||
+    text.includes('"status":"successful"') ||
+    text.includes('"status":"paid"')
+  );
+}
 function nextOrderNumber() {
   const orders = read('orders', []);
   const yyyy = new Date().getFullYear();
@@ -148,36 +248,114 @@ app.post('/api/orders', async (req, res) => {
     };
     const orders = read('orders', []); orders.unshift(order); write('orders', orders);
     await notifyOrder(order, 'received');
-    res.json({ success: true, order, checkoutUrl: `/thank-you.html?order=${order.orderNumber}` });
+
+    const yocoCheckout = await createYocoCheckout(order, req);
+
+    const paymentLogs = read('paymentLogs', []);
+    paymentLogs.unshift({
+      id: uuid(),
+      provider: 'yoco',
+      type: 'checkout_create',
+      orderNumber: order.orderNumber,
+      success: yocoCheckout.success,
+      mode: yocoCheckout.mode || process.env.YOCO_MODE || 'live',
+      status: yocoCheckout.status || 200,
+      error: yocoCheckout.error || null,
+      response: yocoCheckout.data || null,
+      createdAt: new Date().toISOString()
+    });
+    write('paymentLogs', paymentLogs.slice(0, 500));
+
+    res.json({
+      success: true,
+      order,
+      payment: yocoCheckout.success ? 'yoco' : 'placeholder',
+      checkoutUrl: yocoCheckout.checkoutUrl,
+      yoco: yocoCheckout
+    });
   } catch (e) { res.status(400).json({ success: false, message: e.message }); }
 });
 
 app.post('/api/payments/yoco/create-checkout', async (req, res) => {
-  const { orderNumber } = req.body;
-  const orders = read('orders', []);
-  const order = orders.find(o => o.orderNumber === orderNumber);
-  if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-  // Live Yoco checkout can be added here when keys are ready. Webhook route below is already prepared.
-  res.json({ success: true, mode: 'placeholder', message: 'Add YOCO_SECRET_KEY to connect live checkout.', checkoutUrl: `/thank-you.html?order=${order.orderNumber}` });
+  try {
+    const { orderNumber } = req.body;
+    const orders = read('orders', []);
+    const order = orders.find(o => o.orderNumber === orderNumber);
+
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    const yocoCheckout = await createYocoCheckout(order, req);
+
+    const logs = read('paymentLogs', []);
+    logs.unshift({
+      id: uuid(),
+      provider: 'yoco',
+      type: 'manual_checkout_create',
+      orderNumber: order.orderNumber,
+      success: yocoCheckout.success,
+      mode: yocoCheckout.mode || process.env.YOCO_MODE || 'live',
+      status: yocoCheckout.status || 200,
+      error: yocoCheckout.error || null,
+      response: yocoCheckout.data || null,
+      createdAt: new Date().toISOString()
+    });
+    write('paymentLogs', logs.slice(0, 500));
+
+    res.json({
+      success: yocoCheckout.success,
+      checkoutUrl: yocoCheckout.checkoutUrl,
+      yoco: yocoCheckout
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 app.post('/api/webhooks/yoco', express.json({ type: '*/*' }), async (req, res) => {
-  const event = req.body || {};
-  const logs = read('paymentLogs', []);
-  logs.unshift({ id: uuid(), provider: 'yoco', event, createdAt: new Date().toISOString() });
-  write('paymentLogs', logs.slice(0, 500));
-  const refs = [event?.payload?.metadata?.orderNumber, event?.data?.metadata?.orderNumber, event?.metadata?.orderNumber, event?.orderNumber].filter(Boolean);
-  if (refs.length) {
-    const orders = read('orders', []);
-    const idx = orders.findIndex(o => refs.includes(o.orderNumber));
-    if (idx >= 0) {
-      orders[idx].paymentStatus = 'paid';
-      orders[idx].paidAt = new Date().toISOString();
-      orders[idx].updatedAt = new Date().toISOString();
-      write('orders', orders);
+  try {
+    const event = req.body || {};
+
+    const logs = read('paymentLogs', []);
+    logs.unshift({
+      id: uuid(),
+      provider: 'yoco',
+      type: 'webhook',
+      event,
+      headers: {
+        signature: req.headers['webhook-signature'] || req.headers['x-yoco-signature'] || req.headers['x-signature'] || ''
+      },
+      createdAt: new Date().toISOString()
+    });
+    write('paymentLogs', logs.slice(0, 500));
+
+    const refs = extractYocoRefs(event);
+    const paid = isYocoPaidEvent(event);
+
+    if (refs.length && paid) {
+      const orders = read('orders', []);
+      const idx = orders.findIndex(o => refs.includes(o.orderNumber) || refs.includes(o.id));
+
+      if (idx >= 0) {
+        orders[idx].paymentStatus = 'paid';
+        orders[idx].fulfillmentStatus = orders[idx].fulfillmentStatus || 'new';
+        orders[idx].paidAt = new Date().toISOString();
+        orders[idx].updatedAt = new Date().toISOString();
+
+        orders[idx].notes = Array.isArray(orders[idx].notes) ? orders[idx].notes : [];
+        orders[idx].notes.push({
+          type: 'payment',
+          message: 'Payment confirmed by Yoco webhook',
+          createdAt: new Date().toISOString()
+        });
+
+        write('orders', orders);
+      }
     }
+
+    res.json({ success: true, received: true, paid, refs });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
-  res.json({ success: true, received: true, refs });
 });
 
 app.post('/api/admin/login', async (req, res) => {

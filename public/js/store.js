@@ -233,6 +233,11 @@ async function submitOrder(e) {
 
   localStorage.setItem("ff_last_order", JSON.stringify(res.order));
   cart.clear();
+
+  if (res.payment === "placeholder") {
+    alert("Order created, but Yoco is not fully connected yet. Check Render YOCO_SECRET_KEY.");
+  }
+
   location.href = res.checkoutUrl;
 }
 
@@ -471,6 +476,11 @@ submitOrder = async function(e) {
 
   localStorage.setItem("ff_last_order", JSON.stringify(res.order));
   cart.clear();
+
+  if (res.payment === "placeholder") {
+    alert("Order created, but Yoco is not fully connected yet. Check Render YOCO_SECRET_KEY.");
+  }
+
   location.href = res.checkoutUrl;
 };
 
