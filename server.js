@@ -418,4 +418,49 @@ app.post('/api/admin/users', requireAuth, (req, res) => {
 app.get('/api/admin/payment-logs', requireAuth, (req, res) => { if (req.user.role !== 'super_admin') return res.status(403).json({ success:false }); res.json({ success:true, paymentLogs: read('paymentLogs', []) }); });
 app.get('/api/admin/email-logs', requireAuth, (req, res) => { if (req.user.role !== 'super_admin') return res.status(403).json({ success:false }); res.json({ success:true, emailLogs: read('emailLogs', []) }); });
 
+
+
+// ===== Clean public URL routes =====
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get('/products', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "products.html"));
+});
+
+app.get('/cart', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "cart.html"));
+});
+
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "checkout.html"));
+});
+
+app.get('/thank-you', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "thank-you.html"));
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "contact.html"));
+});
+
+app.get('/policies', (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "policies.html"));
+});
+
+// Redirect old .html links to clean URLs
+app.get('/index.html', (req, res) => res.redirect(301, '/'));
+app.get('/products.html', (req, res) => res.redirect(301, '/products'));
+app.get('/cart.html', (req, res) => res.redirect(301, '/cart'));
+app.get('/checkout.html', (req, res) => res.redirect(301, '/checkout'));
+app.get('/thank-you.html', (req, res) => {
+  const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  res.redirect(301, '/thank-you' + query);
+});
+app.get('/contact.html', (req, res) => res.redirect(301, '/contact'));
+app.get('/policies.html', (req, res) => res.redirect(301, '/policies'));
+
+// ===== End clean public URL routes =====
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
