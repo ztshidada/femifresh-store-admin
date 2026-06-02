@@ -102,7 +102,7 @@ function renderCartPage() {
         <div class="empty-state">
           <h3>Your cart is empty</h3>
           <p>Add your favourite FemiFresh products to continue shopping.</p>
-          <a class="primary-btn" href="/products.html">Shop Products</a>
+          <a class="primary-btn" href="/products">Shop Products</a>
         </div>
       `;
     } else {

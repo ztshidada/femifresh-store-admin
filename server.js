@@ -42,7 +42,7 @@ async function createYocoCheckout(order, req) {
     return {
       success: false,
       mode: "missing_key",
-      checkoutUrl: `/thank-you.html?order=${order.orderNumber}`
+      checkoutUrl: `/thank-you?order=${order.orderNumber}`
     };
   }
 
@@ -51,9 +51,9 @@ async function createYocoCheckout(order, req) {
   const body = {
     amount: cents(order.total),
     currency: "ZAR",
-    successUrl: `${appUrl}/thank-you.html?order=${encodeURIComponent(order.orderNumber)}&payment=success`,
-    cancelUrl: `${appUrl}/checkout.html?order=${encodeURIComponent(order.orderNumber)}&payment=cancelled`,
-    failureUrl: `${appUrl}/checkout.html?order=${encodeURIComponent(order.orderNumber)}&payment=failed`,
+    successUrl: `${appUrl}/thank-you?order=${encodeURIComponent(order.orderNumber)}&payment=success`,
+    cancelUrl: `${appUrl}/checkout?order=${encodeURIComponent(order.orderNumber)}&payment=cancelled`,
+    failureUrl: `${appUrl}/checkout?order=${encodeURIComponent(order.orderNumber)}&payment=failed`,
     metadata: {
       orderNumber: order.orderNumber,
       orderId: order.id,
@@ -76,7 +76,7 @@ async function createYocoCheckout(order, req) {
       mode: "yoco_error",
       status: response.status,
       error: data,
-      checkoutUrl: `/thank-you.html?order=${order.orderNumber}`
+      checkoutUrl: `/thank-you?order=${order.orderNumber}`
     };
   }
 
@@ -90,7 +90,7 @@ async function createYocoCheckout(order, req) {
   return {
     success: true,
     data,
-    checkoutUrl: redirectUrl || `/thank-you.html?order=${order.orderNumber}`
+    checkoutUrl: redirectUrl || `/thank-you?order=${order.orderNumber}`
   };
 }
 
