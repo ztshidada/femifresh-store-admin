@@ -680,4 +680,41 @@ app.get("/api/affiliate/me", (req, res) => {
 });
 // END AFFILIATE_JOINING_SYSTEM_V1
 
+
+
+// AFFILIATE_SUBDOMAIN_ROUTING_V1
+function isAffiliateHostV1(req) {
+  const host = String(req.get("host") || "").toLowerCase();
+  return host.startsWith("affiliates.femifresh.co.za") || host.startsWith("affiliates.");
+}
+
+app.get("/", (req, res, next) => {
+  if (isAffiliateHostV1(req)) {
+    return res.sendFile(path.join(__dirname, "public", "join.html"));
+  }
+  next();
+});
+
+app.get("/login", (req, res, next) => {
+  if (isAffiliateHostV1(req)) {
+    return res.sendFile(path.join(__dirname, "public", "affiliate-login.html"));
+  }
+  next();
+});
+
+app.get("/dashboard", (req, res, next) => {
+  if (isAffiliateHostV1(req)) {
+    return res.sendFile(path.join(__dirname, "public", "affiliate-dashboard.html"));
+  }
+  next();
+});
+
+app.get("/success", (req, res, next) => {
+  if (isAffiliateHostV1(req)) {
+    return res.sendFile(path.join(__dirname, "public", "join-success.html"));
+  }
+  next();
+});
+// END AFFILIATE_SUBDOMAIN_ROUTING_V1
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
