@@ -12,6 +12,36 @@ const { sendMail, logEmail } = require('./src/mail');
 require('./src/seed');
 
 const app = express();
+
+// AFFILIATE_FORCE_TOP_ROUTER_V2
+app.use((req, res, next) => {
+  const host = String(req.get("host") || "").toLowerCase();
+
+  if (!host.startsWith("affiliates.")) {
+    return next();
+  }
+
+  if (req.path === "/" || req.path === "/join") {
+    return res.sendFile(path.join(__dirname, "public", "join.html"));
+  }
+
+  if (req.path === "/login" || req.path === "/affiliate-login") {
+    return res.sendFile(path.join(__dirname, "public", "affiliate-login.html"));
+  }
+
+  if (req.path === "/dashboard" || req.path === "/affiliate-dashboard") {
+    return res.sendFile(path.join(__dirname, "public", "affiliate-dashboard.html"));
+  }
+
+  if (req.path === "/success" || req.path === "/join-success") {
+    return res.sendFile(path.join(__dirname, "public", "join-success.html"));
+  }
+
+  return next();
+});
+// END AFFILIATE_FORCE_TOP_ROUTER_V2
+
+
 const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
