@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+  <title>Join FemiFresh</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<main class="affiliate-page">
+  <section class="container affiliate-wrap">
+    <div class="affiliate-copy">
+      <h1>Join FemiFresh</h1>
+      <p>Open your affiliate account with a once-off R100 joining fee.</p>
+      <div class="rule-box">
+        <p><strong>Joining fee:</strong> R100 once-off</p>
+        <p><strong>Stock package:</strong> R1,350 monthly activation</p>
+        <p><strong>Referral bonus:</strong> R300</p>
+        <p><strong>Target bonus:</strong> R1,000 for 10 active direct recruits</p>
+      </div>
+    </div>
+
+    <form class="affiliate-card" onsubmit="registerAffiliate(event)">
+      <h2>Create account</h2>
+      <input name="firstName" placeholder="First name" required>
+      <input name="lastName" placeholder="Last name" required>
+      <input name="phone" placeholder="Phone" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <input name="sponsorCode" id="sponsorCode" placeholder="Sponsor code optional">
+      <button type="submit">Join and Pay R100</button>
+      <p>Already joined? <a href="/login">Login</a></p>
+    </form>
+  </section>
+</main>
+
+<script>
+const ref = new URLSearchParams(location.search).get("ref");
+if (ref) document.getElementById("sponsorCode").value = ref;
+
+async function registerAffiliate(e) {
+  e.preventDefault();
+  const body = {};
+  new FormData(e.target).forEach((value, key) => body[key] = value);
+
+  const res = await fetch("/api/affiliate/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    alert(data.message || "Registration failed.");
+    return;
+  }
+
+  localStorage.setItem("ff_affiliate_token", data.token);
+  localStorage.setItem("ff_affiliate", JSON.stringify(data.affiliate));
+  location.href = data.checkoutUrl;
+}
+</script>
+</body>
+</html>

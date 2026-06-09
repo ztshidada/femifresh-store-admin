@@ -463,4 +463,221 @@ app.get('/policies.html', (req, res) => res.redirect(301, '/policies'));
 
 // ===== End clean public URL routes =====
 
+
+
+// AFFILIATE_JOINING_SYSTEM_V1
+function makeAffiliateCode(firstName, lastName) {
+  const base = String((firstName || "") + (lastName || ""))
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase()
+    .slice(0, 6) || "FEMI";
+  return base + Math.floor(1000 + Math.random() * 9000);
+}
+
+function publicAffiliate(a) {
+  if (!a) return null;
+  const { passwordHash, token, ...safe } = a;
+  return safe;
+}
+
+function affiliateFromToken(req) {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) return null;
+  const affiliates = read("affiliates", []);
+  return affiliates.find(a => a.token === token) || null;
+}
+
+function affiliateUrl(req) {
+  return (process.env.AFFILIATE_URL || process.env.APP_URL || req.protocol + "://" + req.get("host")).replace(/\/$/, "");
+}
+
+function isAffiliateSubdomain(req) {
+  const host = String(req.get("host") || "").toLowerCase();
+  return host.startsWith("affiliates.");
+}
+
+async function createJoiningFeeCheckout(affiliate, req) {
+  const baseUrl = affiliateUrl(req);
+
+  if (!process.env.YOCO_SECRET_KEY) {
+    return {
+      success: false,
+      payment: "placeholder",
+      checkoutUrl: baseUrl + "/success?code=" + encodeURIComponent(affiliate.referralCode)
+    };
+  }
+
+  const body = {
+    amount: 10000,
+    currency: "ZAR",
+    successUrl: baseUrl + "/success?code=" + encodeURIComponent(affiliate.referralCode) + "&payment=success",
+    cancelUrl: baseUrl + "/?payment=cancelled",
+    failureUrl: baseUrl + "/?payment=failed",
+    metadata: {
+      purpose: "affiliate_joining_fee",
+      affiliateId: affiliate.id,
+      affiliateCode: affiliate.referralCode,
+      affiliateEmail: affiliate.email
+    }
+  };
+
+  const response = await fetch("https://payments.yoco.com/api/checkouts", {
+    method: "POST",
+    headers: yocoHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    return {
+      success: false,
+      payment: "placeholder",
+      checkoutUrl: baseUrl + "/success?code=" + encodeURIComponent(affiliate.referralCode),
+      error: data
+    };
+  }
+
+  const checkoutUrl = data.redirectUrl || data.redirect_url || data.checkoutUrl || data.checkout_url || data.url;
+
+  return {
+    success: true,
+    payment: "yoco",
+    checkoutUrl: checkoutUrl || baseUrl + "/success?code=" + encodeURIComponent(affiliate.referralCode),
+    data
+  };
+}
+
+app.get("/join", (req, res) => res.sendFile(path.join(__dirname, "public", "join.html")));
+app.get("/affiliate-login", (req, res) => res.sendFile(path.join(__dirname, "public", "affiliate-login.html")));
+app.get("/affiliate-dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "affiliate-dashboard.html")));
+app.get("/join-success", (req, res) => res.sendFile(path.join(__dirname, "public", "join-success.html")));
+
+app.get("/", (req, res, next) => {
+  if (isAffiliateSubdomain(req)) return res.sendFile(path.join(__dirname, "public", "join.html"));
+  next();
+});
+
+app.get("/login", (req, res, next) => {
+  if (isAffiliateSubdomain(req)) return res.sendFile(path.join(__dirname, "public", "affiliate-login.html"));
+  next();
+});
+
+app.get("/dashboard", (req, res, next) => {
+  if (isAffiliateSubdomain(req)) return res.sendFile(path.join(__dirname, "public", "affiliate-dashboard.html"));
+  next();
+});
+
+app.get("/success", (req, res, next) => {
+  if (isAffiliateSubdomain(req)) return res.sendFile(path.join(__dirname, "public", "join-success.html"));
+  next();
+});
+
+app.post("/api/affiliate/register", async (req, res) => {
+  try {
+    const { firstName, lastName, phone, email, password, sponsorCode = "" } = req.body || {};
+
+    if (!firstName || !lastName || !phone || !email || !password) {
+      return res.status(400).json({ success: false, message: "Please complete all required fields." });
+    }
+
+    const affiliates = read("affiliates", []);
+    const exists = affiliates.find(a => String(a.email).toLowerCase() === String(email).toLowerCase());
+
+    if (exists) {
+      return res.status(400).json({ success: false, message: "This email already has an affiliate account." });
+    }
+
+    let referralCode = makeAffiliateCode(firstName, lastName);
+    while (affiliates.find(a => a.referralCode === referralCode)) {
+      referralCode = makeAffiliateCode(firstName, lastName);
+    }
+
+    const sponsor = sponsorCode
+      ? affiliates.find(a => String(a.referralCode).toUpperCase() === String(sponsorCode).toUpperCase())
+      : null;
+
+    const affiliate = {
+      id: uuid(),
+      firstName,
+      lastName,
+      fullName: firstName + " " + lastName,
+      phone,
+      email,
+      passwordHash: bcrypt.hashSync(password, 10),
+      token: crypto.randomBytes(32).toString("hex"),
+      referralCode,
+      sponsorCode: sponsor ? sponsor.referralCode : "",
+      sponsorId: sponsor ? sponsor.id : "",
+      accountStatus: "pending_joining_fee",
+      joiningFeeStatus: "pending",
+      joiningFeeAmount: 100,
+      activeMonths: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    affiliates.unshift(affiliate);
+    write("affiliates", affiliates);
+
+    const checkout = await createJoiningFeeCheckout(affiliate, req);
+
+    res.json({
+      success: true,
+      affiliate: publicAffiliate(affiliate),
+      token: affiliate.token,
+      payment: checkout.payment,
+      checkoutUrl: checkout.checkoutUrl
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.post("/api/affiliate/login", (req, res) => {
+  const { email, password } = req.body || {};
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => String(a.email).toLowerCase() === String(email).toLowerCase());
+
+  if (!affiliate || !bcrypt.compareSync(password || "", affiliate.passwordHash || "")) {
+    return res.status(401).json({ success: false, message: "Wrong email or password." });
+  }
+
+  affiliate.token = crypto.randomBytes(32).toString("hex");
+  affiliate.updatedAt = new Date().toISOString();
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: publicAffiliate(affiliate), token: affiliate.token });
+});
+
+app.get("/api/affiliate/me", (req, res) => {
+  const affiliate = affiliateFromToken(req);
+
+  if (!affiliate) {
+    return res.status(401).json({ success: false, message: "Not logged in." });
+  }
+
+  const affiliates = read("affiliates", []);
+  const month = new Date().toISOString().slice(0, 7);
+  const directs = affiliates.filter(a => a.sponsorId === affiliate.id);
+  const activeDirects = directs.filter(a => Array.isArray(a.activeMonths) && a.activeMonths.includes(month));
+  const selfActive = Array.isArray(affiliate.activeMonths) && affiliate.activeMonths.includes(month);
+
+  res.json({
+    success: true,
+    affiliate: publicAffiliate(affiliate),
+    stats: {
+      month,
+      selfActive,
+      directRecruits: directs.length,
+      activeDirectRecruits: activeDirects.length,
+      targetBonusCounted: activeDirects.length >= 10 ? 1000 : 0,
+      targetBonusPayable: selfActive && activeDirects.length >= 10 ? 1000 : 0,
+      referralBonusPerActiveRecruit: 300
+    }
+  });
+});
+// END AFFILIATE_JOINING_SYSTEM_V1
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

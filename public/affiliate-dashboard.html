@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <title>Affiliate Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<main class="affiliate-page">
+  <section class="container affiliate-dashboard">
+    <h1 id="welcomeName">Welcome</h1>
+    <div class="dash-grid">
+      <div class="dash-card"><span>Referral Code</span><strong id="referralCode">---</strong></div>
+      <div class="dash-card"><span>Account Status</span><strong id="accountStatus">---</strong></div>
+      <div class="dash-card"><span>Active Directs</span><strong id="activeDirects">0</strong></div>
+      <div class="dash-card"><span>Target Bonus Payable</span><strong id="targetPayable">R0</strong></div>
+    </div>
+    <button onclick="copyLink()">Copy Referral Link</button>
+    <button onclick="logout()">Logout</button>
+  </section>
+</main>
+
+<script>
+async function loadDash() {
+  const token = localStorage.getItem("ff_affiliate_token");
+  if (!token) return location.href = "/login";
+
+  const res = await fetch("/api/affiliate/me", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+  if (!data.success) return location.href = "/login";
+
+  document.getElementById("welcomeName").textContent = "Welcome, " + data.affiliate.firstName;
+  document.getElementById("referralCode").textContent = data.affiliate.referralCode;
+  document.getElementById("accountStatus").textContent = data.affiliate.accountStatus;
+  document.getElementById("activeDirects").textContent = data.stats.activeDirectRecruits;
+  document.getElementById("targetPayable").textContent = "R" + data.stats.targetBonusPayable;
+}
+
+function copyLink() {
+  const code = document.getElementById("referralCode").textContent;
+  const link = location.origin + "/?ref=" + code;
+  navigator.clipboard.writeText(link);
+  alert("Copied: " + link);
+}
+
+function logout() {
+  localStorage.removeItem("ff_affiliate_token");
+  location.href = "/login";
+}
+
+loadDash();
+</script>
+</body>
+</html>
