@@ -754,8 +754,7 @@ app.get("/success", (req, res, next) => {
 // AFFILIATE_ADMIN_SAFE_MIDDLEWARE_V1
 function affiliateAdminSafeAuth(req, res, next) {
   try {
-    const auth = req.headers.authorization || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    const token = getAffAdminToken(req);
 
     if (!token) {
       return res.status(401).json({ success: false, message: "Admin login required." });
@@ -787,8 +786,7 @@ function affiliateAdminSafeAuth(req, res, next) {
 // AFFILIATE_ADMIN_AUTH_V2
 function affiliateAdminAuthV2(req, res, next) {
   try {
-    const auth = req.headers.authorization || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    const token = getAffAdminToken(req);
 
     if (!token) {
       return res.status(401).json({ success: false, message: "Admin login required." });
@@ -911,11 +909,38 @@ app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminAuthV2, (req, 
 
 
 
+
+
+// AFF_ADMIN_TOKEN_READER_V3
+function getAffAdminToken(req) {
+  const auth = req.headers.authorization || "";
+
+  if (auth.startsWith("Bearer ")) {
+    return auth.slice(7);
+  }
+
+  if (req.cookies && req.cookies.ff_admin_token) {
+    return req.cookies.ff_admin_token;
+  }
+
+  const rawCookie = req.headers.cookie || "";
+  const parts = rawCookie.split(";").map(x => x.trim());
+
+  for (const part of parts) {
+    const [key, ...rest] = part.split("=");
+    if (key === "ff_admin_token") {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+
+  return "";
+}
+// END AFF_ADMIN_TOKEN_READER_V3
+
 // AFFILIATE_SYSTEM_ADMIN_V1
 function affiliateSystemAdminAuth(req, res, next) {
   try {
-    const auth = req.headers.authorization || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    const token = getAffAdminToken(req);
 
     if (!token) {
       return res.status(401).json({ success: false, message: "Admin login required." });

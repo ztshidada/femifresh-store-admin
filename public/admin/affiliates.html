@@ -128,7 +128,7 @@ function getToken() {
   return "";
 }
 
-async function api(url, options = {}) {
+async function affApi(url, options = {}) {
   const token = getToken();
 
   const headers = {
@@ -163,7 +163,7 @@ async function api(url, options = {}) {
 }
 
 async function loadOverview() {
-  const data = await api("/api/aff-admin/overview");
+  const data = await affApi("/api/aff-admin/overview");
   const o = data.overview;
 
   document.getElementById("overviewCards").innerHTML = `
@@ -186,7 +186,7 @@ async function loadAffiliatesNow() {
 
   rows.innerHTML = '<tr><td colspan="9">Loading affiliates...</td></tr>';
 
-  const data = await api("/api/aff-admin/affiliates?q=" + encodeURIComponent(q));
+  const data = await affApi("/api/aff-admin/affiliates?q=" + encodeURIComponent(q));
 
   if (!data.affiliates || !data.affiliates.length) {
     rows.innerHTML = '<tr><td colspan="9">No affiliates found.</td></tr>';
@@ -238,6 +238,6 @@ function logoutAdmin() {
 
 loadEverything();
 </script>
-<script src="/admin/js/admin.js"></script>
+
 </body>
 </html>

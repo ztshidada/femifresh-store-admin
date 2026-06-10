@@ -85,7 +85,7 @@ function adminToken() {
   return localStorage.getItem("femifresh_admin_token") || localStorage.getItem("ff_admin_token") || localStorage.getItem("token") || "";
 }
 
-async function api(url, options = {}) {
+async function affProfileApi(url, options = {}) {
   const res = await fetch(url, {
     ...options,
     credentials: "same-origin",
@@ -106,7 +106,7 @@ async function loadProfile() {
   errorBox.style.display = "none";
 
   try {
-    const data = await api("/api/aff-admin/affiliates/" + encodeURIComponent(id));
+    const data = await affProfileApi("/api/aff-admin/affiliates/" + encodeURIComponent(id));
     const a = data.affiliate;
     const s = data.stats;
     currentAffiliate = a;
@@ -161,7 +161,7 @@ async function loadProfile() {
 }
 
 async function postAction(url, body = {}) {
-  await api(url, { method: "POST", body: JSON.stringify(body) });
+  await affProfileApi(url, { method: "POST", body: JSON.stringify(body) });
   loadProfile();
 }
 
