@@ -88,9 +88,10 @@ function adminToken() {
 async function api(url, options = {}) {
   const res = await fetch(url, {
     ...options,
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + adminToken(),
+      ...(adminToken() ? { Authorization: "Bearer " + adminToken() } : {}),
       ...(options.headers || {})
     }
   });
