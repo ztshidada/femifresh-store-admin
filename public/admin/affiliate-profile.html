@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Affiliate Profile - FemiFresh Admin</title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="sidebar">
+    <h2>FemiFresh<br>Admin</h2>
+    <a href="/admin/dashboard.html">Dashboard</a>
+    <a href="/admin/orders.html">Orders</a>
+    <a href="/admin/affiliates.html">Affiliates</a>
+    <a href="/admin/products.html">Products</a>
+    <a href="/admin/delivery.html">Delivery Methods</a>
+    <a href="/admin/users.html">Admin Users</a>
+    <a href="/admin/logs.html">Payment & Email Logs</a>
+    <button id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div>
+        <p class="muted">Affiliate Support Profile</p>
+        <h1 id="profileName">Affiliate Profile</h1>
+      </div>
+      <a class="mini-btn" href="/admin/affiliates.html">Back to Affiliates</a>
+    </div>
+
+    <div id="errorBox" class="admin-alert" style="display:none;"></div>
+
+    <section class="metric-grid" id="profileMetrics"></section>
+
+    <section class="profile-grid">
+      <div class="panel">
+        <h2>Account Details</h2>
+        <div id="accountDetails">Loading...</div>
+      </div>
+
+      <div class="panel">
+        <h2>Admin Actions</h2>
+        <div class="action-stack big-actions">
+          <button onclick="markJoiningPaid()">Mark Joining Fee Paid</button>
+          <button onclick="markActive()">Mark Active This Month</button>
+          <button onclick="markInactive()">Mark Inactive This Month</button>
+          <button onclick="changeSponsor()">Change Sponsor</button>
+          <button onclick="blockPayout()">Block Payout</button>
+          <button onclick="unblockPayout()">Unblock Payout</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Direct Recruits</h2>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Joining</th>
+              <th>Active</th>
+              <th>Money</th>
+              <th>Open</th>
+            </tr>
+          </thead>
+          <tbody id="directRows">
+            <tr><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/admin/js/admin.js"></script>
+<script>
+const id = new URLSearchParams(location.search).get("id");
+const money = n => "R" + Number(n || 0).toFixed(2);
+let currentAffiliate = null;
+
+function adminToken() {
+  return localStorage.getItem("femifresh_admin_token") || localStorage.getItem("ff_admin_token") || localStorage.getItem("token") || "";
+}
+
+async function api(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + adminToken(),
+      ...(options.headers || {})
+    }
+  });
+
+  const data = await res.json().catch(() => ({ success:false, message:"Invalid server response" }));
+  if (!res.ok) throw new Error(data.message || "Request failed");
+  return data;
+}
+
+async function loadProfile() {
+  const errorBox = document.getElementById("errorBox");
+  errorBox.style.display = "none";
+
+  try {
+    const data = await api("/api/aff-admin/affiliates/" + encodeURIComponent(id));
+    const a = data.affiliate;
+    const s = data.stats;
+    currentAffiliate = a;
+
+    const name = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "Affiliate";
+    document.getElementById("profileName").textContent = name;
+
+    document.getElementById("profileMetrics").innerHTML = `
+      <div class="metric-card"><span>Referral Code</span><strong>${a.referralCode || "---"}</strong></div>
+      <div class="metric-card"><span>Active Directs</span><strong>${s.activeDirectRecruits} / ${s.directRecruits}</strong></div>
+      <div class="metric-card"><span>Total Counted</span><strong>${money(s.totalCounted)}</strong></div>
+      <div class="metric-card"><span>Total Payable</span><strong>${money(s.totalPayable)}</strong></div>
+    `;
+
+    document.getElementById("accountDetails").innerHTML = `
+      <div class="info-lines">
+        <p><strong>Email:</strong> ${a.email || "---"}</p>
+        <p><strong>Phone:</strong> ${a.phone || "---"}</p>
+        <p><strong>Sponsor:</strong> ${data.sponsor ? ((data.sponsor.fullName || data.sponsor.email) + " (" + data.sponsor.referralCode + ")") : "---"}</p>
+        <p><strong>Joining Fee:</strong> ${a.joiningFeeStatus || "pending"}</p>
+        <p><strong>Account Status:</strong> ${a.accountStatus || "---"}</p>
+        <p><strong>Active this month:</strong> ${s.selfActive ? "Yes" : "No"}</p>
+        <p><strong>Blocked:</strong> ${a.payoutBlocked ? "Yes" : "No"}</p>
+        <p><strong>Blocked reason:</strong> ${a.payoutBlockedReason || s.blockedReason || "---"}</p>
+        <p><strong>Needs for target:</strong> ${s.needsForTarget} more active directs</p>
+      </div>
+    `;
+
+    if (!data.directs.length) {
+      document.getElementById("directRows").innerHTML = '<tr><td colspan="6">No direct recruits yet.</td></tr>';
+    } else {
+      document.getElementById("directRows").innerHTML = data.directs.map(d => {
+        const ds = d.stats || {};
+        const dname = d.fullName || ((d.firstName || "") + " " + (d.lastName || "")).trim() || "---";
+
+        return `
+          <tr>
+            <td><strong>${dname}</strong><br><small>${d.email || ""}</small></td>
+            <td>${d.referralCode || "---"}</td>
+            <td>${d.joiningFeeStatus || "pending"}</td>
+            <td>${ds.selfActive ? "Active" : "Inactive"}</td>
+            <td>Payable: ${money(ds.totalPayable)}</td>
+            <td><a class="mini-btn" href="/admin/affiliate-profile.html?id=${d.id}">Open</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+  } catch (e) {
+    errorBox.textContent = e.message;
+    errorBox.style.display = "block";
+  }
+}
+
+async function postAction(url, body = {}) {
+  await api(url, { method: "POST", body: JSON.stringify(body) });
+  loadProfile();
+}
+
+function markJoiningPaid() {
+  if (confirm("Mark joining fee as paid?")) {
+    postAction("/api/aff-admin/affiliates/" + id + "/mark-joining-paid");
+  }
+}
+
+function markActive() {
+  postAction("/api/aff-admin/affiliates/" + id + "/mark-active", {
+    month: new Date().toISOString().slice(0, 7)
+  });
+}
+
+function markInactive() {
+  if (confirm("Mark inactive for this month?")) {
+    postAction("/api/aff-admin/affiliates/" + id + "/mark-inactive", {
+      month: new Date().toISOString().slice(0, 7)
+    });
+  }
+}
+
+function changeSponsor() {
+  const code = prompt("Enter new sponsor referral code. Leave empty to remove sponsor.");
+  if (code === null) return;
+
+  postAction("/api/aff-admin/affiliates/" + id + "/change-sponsor", {
+    newSponsorCode: code
+  });
+}
+
+function blockPayout() {
+  const reason = prompt("Reason for blocking payout:", "Account under review");
+  if (!reason) return;
+
+  postAction("/api/aff-admin/affiliates/" + id + "/block-payout", { reason });
+}
+
+function unblockPayout() {
+  postAction("/api/aff-admin/affiliates/" + id + "/unblock-payout");
+}
+
+loadProfile();
+</script>
+</body>
+</html>

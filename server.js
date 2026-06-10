@@ -909,4 +909,335 @@ app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminAuthV2, (req, 
 });
 // END AFFILIATE_ADMIN_API_V1
 
+
+
+// AFFILIATE_SYSTEM_ADMIN_V1
+function affiliateSystemAdminAuth(req, res, next) {
+  try {
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Admin login required." });
+    }
+
+    let payload = null;
+
+    try {
+      if (typeof jwt !== "undefined") {
+        payload = jwt.verify(token, process.env.JWT_SECRET || "femifresh_super_secure_secret_2026_change_later");
+      }
+    } catch (e) {
+      try {
+        if (typeof jwt !== "undefined") payload = jwt.decode(token);
+      } catch (_) {}
+    }
+
+    const payloadRole = payload?.role || payload?.adminRole || payload?.type || "";
+    if (payloadRole === "super_admin" || payloadRole === "superadmin" || payloadRole === "admin") {
+      req.adminUser = payload;
+      return next();
+    }
+
+    const storesToCheck = ["users", "adminUsers", "admins"];
+    for (const storeName of storesToCheck) {
+      const users = read(storeName, []);
+      const found = users.find(u =>
+        u.token === token ||
+        u.adminToken === token ||
+        u.sessionToken === token ||
+        (payload?.email && String(u.email).toLowerCase() === String(payload.email).toLowerCase()) ||
+        (payload?.id && u.id === payload.id)
+      );
+
+      if (found) {
+        const role = found.role || found.adminRole || found.type || "";
+        if (role === "super_admin" || role === "superadmin" || role === "admin") {
+          req.adminUser = found;
+          return next();
+        }
+      }
+    }
+
+    return res.status(403).json({ success: false, message: "Super Admin only." });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+}
+
+function affiliateSafe(a) {
+  if (!a) return null;
+  const { passwordHash, token, ...safe } = a;
+  return safe;
+}
+
+function affiliateMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function affiliateIsActive(a, month = affiliateMonthKey()) {
+  return Array.isArray(a.activeMonths) && a.activeMonths.includes(month);
+}
+
+function getAffiliateDirects(affiliate, affiliates) {
+  return affiliates.filter(a => a.sponsorId === affiliate.id || a.sponsorCode === affiliate.referralCode);
+}
+
+function calculateAffiliateStats(affiliate, affiliates, month = affiliateMonthKey()) {
+  const directs = getAffiliateDirects(affiliate, affiliates);
+  const activeDirects = directs.filter(a => affiliateIsActive(a, month));
+  const selfActive = affiliateIsActive(affiliate, month);
+
+  const referralBonusCounted = activeDirects.length * 300;
+  const targetBonusCounted = activeDirects.length >= 10 ? 1000 : 0;
+  const totalCounted = referralBonusCounted + targetBonusCounted;
+
+  const payoutBlocked = affiliate.payoutBlocked === true;
+  const payable = selfActive && !payoutBlocked ? totalCounted : 0;
+  const blocked = totalCounted - payable;
+
+  let blockedReason = "";
+  if (totalCounted > 0 && !selfActive) blockedReason = "Affiliate is not active for this month.";
+  if (totalCounted > 0 && payoutBlocked) blockedReason = affiliate.payoutBlockedReason || "Payout is blocked by admin.";
+
+  return {
+    month,
+    selfActive,
+    directRecruits: directs.length,
+    activeDirectRecruits: activeDirects.length,
+    referralBonusCounted,
+    targetBonusCounted,
+    totalCounted,
+    totalPayable: payable,
+    totalBlocked: blocked,
+    blockedReason,
+    needsForTarget: Math.max(0, 10 - activeDirects.length)
+  };
+}
+
+function buildAffiliateTree(root, affiliates, depth = 0, maxDepth = 10) {
+  if (!root || depth >= maxDepth) return [];
+
+  const children = getAffiliateDirects(root, affiliates);
+  return children.map(child => ({
+    ...affiliateSafe(child),
+    depth,
+    children: buildAffiliateTree(child, affiliates, depth + 1, maxDepth)
+  }));
+}
+
+app.get("/api/aff-admin/overview", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const month = affiliateMonthKey();
+
+  const approved = affiliates.filter(a => a.accountStatus === "approved").length;
+  const pendingJoining = affiliates.filter(a => a.joiningFeeStatus !== "paid").length;
+  const active = affiliates.filter(a => affiliateIsActive(a, month)).length;
+
+  let counted = 0;
+  let payable = 0;
+  affiliates.forEach(a => {
+    const stats = calculateAffiliateStats(a, affiliates, month);
+    counted += stats.totalCounted;
+    payable += stats.totalPayable;
+  });
+
+  res.json({
+    success: true,
+    overview: {
+      totalAffiliates: affiliates.length,
+      approved,
+      pendingJoining,
+      activeThisMonth: active,
+      totalCounted: counted,
+      totalPayable: payable
+    }
+  });
+});
+
+app.get("/api/aff-admin/affiliates", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const month = req.query.month || affiliateMonthKey();
+  const q = String(req.query.q || "").toLowerCase();
+
+  let list = affiliates.map(a => ({
+    ...affiliateSafe(a),
+    stats: calculateAffiliateStats(a, affiliates, month)
+  }));
+
+  if (q) {
+    list = list.filter(a =>
+      String(a.fullName || "").toLowerCase().includes(q) ||
+      String(a.firstName || "").toLowerCase().includes(q) ||
+      String(a.lastName || "").toLowerCase().includes(q) ||
+      String(a.email || "").toLowerCase().includes(q) ||
+      String(a.phone || "").toLowerCase().includes(q) ||
+      String(a.referralCode || "").toLowerCase().includes(q) ||
+      String(a.sponsorCode || "").toLowerCase().includes(q)
+    );
+  }
+
+  res.json({ success: true, affiliates: list });
+});
+
+app.get("/api/aff-admin/affiliates/:id", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const month = req.query.month || affiliateMonthKey();
+
+  const affiliate = affiliates.find(a => a.id === req.params.id || a.referralCode === req.params.id);
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  const sponsor = affiliates.find(a => a.id === affiliate.sponsorId || a.referralCode === affiliate.sponsorCode) || null;
+  const directs = getAffiliateDirects(affiliate, affiliates).map(a => ({
+    ...affiliateSafe(a),
+    stats: calculateAffiliateStats(a, affiliates, month)
+  }));
+
+  res.json({
+    success: true,
+    affiliate: affiliateSafe(affiliate),
+    sponsor: affiliateSafe(sponsor),
+    stats: calculateAffiliateStats(affiliate, affiliates, month),
+    directs,
+    tree: buildAffiliateTree(affiliate, affiliates)
+  });
+});
+
+app.post("/api/aff-admin/affiliates/:id/change-sponsor", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  const newSponsorCode = String(req.body.newSponsorCode || "").trim().toUpperCase();
+
+  if (!newSponsorCode) {
+    affiliate.sponsorId = "";
+    affiliate.sponsorCode = "";
+    affiliate.updatedAt = new Date().toISOString();
+    write("affiliates", affiliates);
+    return res.json({ success: true, message: "Sponsor removed.", affiliate: affiliateSafe(affiliate) });
+  }
+
+  const sponsor = affiliates.find(a => String(a.referralCode).toUpperCase() === newSponsorCode);
+
+  if (!sponsor) return res.status(404).json({ success: false, message: "New sponsor code not found." });
+  if (sponsor.id === affiliate.id) return res.status(400).json({ success: false, message: "Affiliate cannot sponsor themselves." });
+
+  affiliate.sponsorId = sponsor.id;
+  affiliate.sponsorCode = sponsor.referralCode;
+  affiliate.updatedAt = new Date().toISOString();
+
+  affiliate.adminNotes = Array.isArray(affiliate.adminNotes) ? affiliate.adminNotes : [];
+  affiliate.adminNotes.push({
+    type: "change_sponsor",
+    message: "Sponsor changed to " + sponsor.referralCode,
+    createdAt: new Date().toISOString()
+  });
+
+  write("affiliates", affiliates);
+
+  res.json({ success: true, message: "Sponsor changed.", affiliate: affiliateSafe(affiliate) });
+});
+
+app.post("/api/aff-admin/affiliates/:id/mark-joining-paid", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  affiliate.joiningFeeStatus = "paid";
+  affiliate.accountStatus = "approved";
+  affiliate.joiningFeePaidAt = affiliate.joiningFeePaidAt || new Date().toISOString();
+  affiliate.updatedAt = new Date().toISOString();
+
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+});
+
+app.post("/api/aff-admin/affiliates/:id/mark-active", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  const month = req.body.month || affiliateMonthKey();
+  affiliate.activeMonths = Array.isArray(affiliate.activeMonths) ? affiliate.activeMonths : [];
+
+  if (!affiliate.activeMonths.includes(month)) affiliate.activeMonths.push(month);
+
+  affiliate.updatedAt = new Date().toISOString();
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+});
+
+app.post("/api/aff-admin/affiliates/:id/mark-inactive", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  const month = req.body.month || affiliateMonthKey();
+  affiliate.activeMonths = Array.isArray(affiliate.activeMonths) ? affiliate.activeMonths : [];
+  affiliate.activeMonths = affiliate.activeMonths.filter(m => m !== month);
+
+  affiliate.updatedAt = new Date().toISOString();
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+});
+
+app.post("/api/aff-admin/affiliates/:id/block-payout", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  affiliate.payoutBlocked = true;
+  affiliate.payoutBlockedReason = req.body.reason || "Blocked by admin.";
+  affiliate.updatedAt = new Date().toISOString();
+
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+});
+
+app.post("/api/aff-admin/affiliates/:id/unblock-payout", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) return res.status(404).json({ success: false, message: "Affiliate not found." });
+
+  affiliate.payoutBlocked = false;
+  affiliate.payoutBlockedReason = "";
+  affiliate.updatedAt = new Date().toISOString();
+
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+});
+
+app.post("/api/aff-admin/recalculate", affiliateSystemAdminAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const month = req.body.month || affiliateMonthKey();
+
+  const summary = affiliates.map(a => ({
+    affiliateId: a.id,
+    referralCode: a.referralCode,
+    fullName: a.fullName,
+    stats: calculateAffiliateStats(a, affiliates, month)
+  }));
+
+  write("affiliateCommissionSummary", {
+    month,
+    generatedAt: new Date().toISOString(),
+    summary
+  });
+
+  res.json({ success: true, month, count: summary.length, summary });
+});
+// END AFFILIATE_SYSTEM_ADMIN_V1
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

@@ -23,34 +23,46 @@
   <main class="admin-main">
     <div class="admin-top">
       <div>
-        <p class="muted">Super Admin Only</p>
+        <p class="muted">Affiliate Support</p>
         <h1>Affiliate Admin</h1>
       </div>
-      <button class="primary" onclick="loadAffiliates()">Refresh</button>
+      <button class="primary" onclick="recalculate()">Recalculate</button>
     </div>
 
-    <section class="panel">
-      <h2>Affiliate Accounts</h2>
-      <p class="muted">Manage joining fee status, active status, referral codes, sponsor tracking and target bonus qualification.</p>
+    <section class="metric-grid" id="overviewCards">
+      <div class="metric-card"><span>Total Affiliates</span><strong>...</strong></div>
+      <div class="metric-card"><span>Active This Month</span><strong>...</strong></div>
+      <div class="metric-card"><span>Counted</span><strong>...</strong></div>
+      <div class="metric-card"><span>Payable</span><strong>...</strong></div>
+    </section>
 
-      <div id="affiliateError" class="admin-alert" style="display:none;"></div>
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Affiliate Accounts</h2>
+          <p class="muted">Search, manage sponsor issues, active status, joining fee and payout status.</p>
+        </div>
+        <input class="admin-search" id="searchInput" placeholder="Search name, phone, email, code..." oninput="loadAffiliates()">
+      </div>
+
+      <div id="errorBox" class="admin-alert" style="display:none;"></div>
 
       <div class="table-wrap">
         <table class="admin-table">
           <thead>
             <tr>
               <th>Name</th>
-              <th>Contact</th>
-              <th>Referral Code</th>
+              <th>Code</th>
               <th>Sponsor</th>
-              <th>Joining Fee</th>
+              <th>Joining</th>
               <th>Active</th>
               <th>Directs</th>
-              <th>Target Bonus</th>
-              <th>Actions</th>
+              <th>Money</th>
+              <th>Blocked</th>
+              <th>Open</th>
             </tr>
           </thead>
-          <tbody id="affiliateRows">
+          <tbody id="rows">
             <tr><td colspan="9">Loading...</td></tr>
           </tbody>
         </table>
@@ -63,128 +75,105 @@
 <script>
 const money = n => "R" + Number(n || 0).toFixed(2);
 
-function getAdminToken() {
-  return (
-    localStorage.getItem("femifresh_admin_token") ||
-    localStorage.getItem("ff_admin_token") ||
-    localStorage.getItem("admin_token") ||
-    localStorage.getItem("token") ||
-    ""
-  );
+function adminToken() {
+  return localStorage.getItem("femifresh_admin_token") || localStorage.getItem("ff_admin_token") || localStorage.getItem("token") || "";
 }
 
-async function adminFetch(url, options = {}) {
+async function api(url, options = {}) {
   const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + getAdminToken(),
+      Authorization: "Bearer " + adminToken(),
       ...(options.headers || {})
     }
   });
 
-  const data = await res.json().catch(() => ({
-    success: false,
-    message: "Server returned an invalid response."
-  }));
-
-  if (!res.ok) {
-    throw new Error(data.message || "Request failed with status " + res.status);
-  }
-
+  const data = await res.json().catch(() => ({ success:false, message:"Invalid server response" }));
+  if (!res.ok) throw new Error(data.message || "Request failed");
   return data;
 }
 
-async function loadAffiliates() {
-  const rows = document.getElementById("affiliateRows");
-  const errBox = document.getElementById("affiliateError");
+async function loadOverview() {
+  const data = await api("/api/aff-admin/overview");
+  const o = data.overview;
+  document.getElementById("overviewCards").innerHTML = `
+    <div class="metric-card"><span>Total Affiliates</span><strong>${o.totalAffiliates}</strong></div>
+    <div class="metric-card"><span>Active This Month</span><strong>${o.activeThisMonth}</strong></div>
+    <div class="metric-card"><span>Counted</span><strong>${money(o.totalCounted)}</strong></div>
+    <div class="metric-card"><span>Payable</span><strong>${money(o.totalPayable)}</strong></div>
+  `;
+}
 
-  errBox.style.display = "none";
+let loadTimer;
+function loadAffiliates() {
+  clearTimeout(loadTimer);
+  loadTimer = setTimeout(loadAffiliatesNow, 250);
+}
+
+async function loadAffiliatesNow() {
+  const q = document.getElementById("searchInput").value.trim();
+  const rows = document.getElementById("rows");
+  const errorBox = document.getElementById("errorBox");
+
+  errorBox.style.display = "none";
   rows.innerHTML = '<tr><td colspan="9">Loading...</td></tr>';
 
   try {
-    const data = await adminFetch("/api/admin/affiliates");
+    const data = await api("/api/aff-admin/affiliates?q=" + encodeURIComponent(q));
 
-    if (!data.success) {
-      throw new Error(data.message || "Failed to load affiliates.");
-    }
-
-    if (!data.affiliates || !data.affiliates.length) {
-      rows.innerHTML = '<tr><td colspan="9">No affiliates yet.</td></tr>';
+    if (!data.affiliates.length) {
+      rows.innerHTML = '<tr><td colspan="9">No affiliates found.</td></tr>';
       return;
     }
 
     rows.innerHTML = data.affiliates.map(a => {
-      const fullName = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "---";
-      const activeText = a.selfActive ? "Active" : "Inactive";
-      const joining = a.joiningFeeStatus || "pending";
+      const s = a.stats || {};
+      const name = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "---";
 
       return `
         <tr>
           <td>
-            <strong>${fullName}</strong><br>
-            <small>${a.accountStatus || ""}</small>
-          </td>
-          <td>
-            ${a.email || ""}<br>
-            <small>${a.phone || ""}</small>
+            <strong>${name}</strong><br>
+            <small>${a.email || ""}<br>${a.phone || ""}</small>
           </td>
           <td><strong>${a.referralCode || "---"}</strong></td>
           <td>${a.sponsorCode || "---"}</td>
-          <td><span class="status-pill">${joining}</span></td>
-          <td><span class="status-pill">${activeText}</span></td>
-          <td>${a.activeDirectRecruits || 0} / ${a.directRecruits || 0}</td>
+          <td><span class="status-pill">${a.joiningFeeStatus || "pending"}</span></td>
+          <td><span class="status-pill">${s.selfActive ? "Active" : "Inactive"}</span></td>
+          <td>${s.activeDirectRecruits || 0} / ${s.directRecruits || 0}</td>
           <td>
-            Counted: ${money(a.targetBonusCounted)}<br>
-            Payable: ${money(a.targetBonusPayable)}
+            Counted: <strong>${money(s.totalCounted)}</strong><br>
+            Payable: <strong>${money(s.totalPayable)}</strong>
           </td>
-          <td class="action-stack">
-            <button onclick="markJoiningPaid('${a.id}')">Mark Joining Paid</button>
-            <button onclick="toggleActive('${a.id}')">Toggle Active</button>
-          </td>
+          <td>${a.payoutBlocked ? "Blocked" : "No"}</td>
+          <td><a class="mini-btn" href="/admin/affiliate-profile.html?id=${a.id}">Open</a></td>
         </tr>
       `;
     }).join("");
   } catch (e) {
     rows.innerHTML = '<tr><td colspan="9">Could not load affiliates.</td></tr>';
-    errBox.textContent = e.message;
-    errBox.style.display = "block";
+    errorBox.textContent = e.message;
+    errorBox.style.display = "block";
   }
 }
 
-async function markJoiningPaid(id) {
-  if (!confirm("Mark this affiliate joining fee as paid?")) return;
-
+async function recalculate() {
   try {
-    const data = await adminFetch("/api/admin/affiliates/" + id + "/mark-joining-paid", {
+    const data = await api("/api/aff-admin/recalculate", {
       method: "POST",
       body: JSON.stringify({})
     });
-
-    if (!data.success) throw new Error(data.message || "Failed.");
-    loadAffiliates();
+    alert("Recalculated " + data.count + " affiliates.");
+    loadOverview();
+    loadAffiliatesNow();
   } catch (e) {
     alert(e.message);
   }
 }
 
-async function toggleActive(id) {
-  const month = new Date().toISOString().slice(0, 7);
-
-  try {
-    const data = await adminFetch("/api/admin/affiliates/" + id + "/toggle-active", {
-      method: "POST",
-      body: JSON.stringify({ month })
-    });
-
-    if (!data.success) throw new Error(data.message || "Failed.");
-    loadAffiliates();
-  } catch (e) {
-    alert(e.message);
-  }
-}
-
-loadAffiliates();
+loadOverview();
+loadAffiliatesNow();
 </script>
 </body>
 </html>
