@@ -9,15 +9,14 @@
 <body>
 <div class="admin-shell">
   <aside class="sidebar">
-    <h2>FemiFresh</h2>
+    <h2>FemiFresh<br>Admin</h2>
     <a href="/admin/dashboard.html">Dashboard</a>
     <a href="/admin/orders.html">Orders</a>
-    <a href="/admin/affiliates.html" data-super-only>Affiliates</a>
-    <a href="/admin/products.html" data-super-only>Products</a>
-    <a href="/admin/delivery.html" data-super-only>Delivery</a>
-    <a href="/admin/users.html" data-super-only>Users</a>
-    <a href="/admin/logs.html" data-super-only>Logs</a>
-    <a href="/admin/settings.html" data-super-only>Settings</a>
+    <a href="/admin/affiliates.html">Affiliates</a>
+    <a href="/admin/products.html">Products</a>
+    <a href="/admin/delivery.html">Delivery Methods</a>
+    <a href="/admin/users.html">Admin Users</a>
+    <a href="/admin/logs.html">Payment & Email Logs</a>
     <button id="logoutBtn">Logout</button>
   </aside>
 
@@ -32,7 +31,9 @@
 
     <section class="panel">
       <h2>Affiliate Accounts</h2>
-      <p class="muted">Manage joining fee status, active status, referral codes and sponsor tracking.</p>
+      <p class="muted">Manage joining fee status, active status, referral codes, sponsor tracking and target bonus qualification.</p>
+
+      <div id="affiliateError" class="admin-alert" style="display:none;"></div>
 
       <div class="table-wrap">
         <table class="admin-table">
@@ -62,8 +63,14 @@
 <script>
 const money = n => "R" + Number(n || 0).toFixed(2);
 
-function token() {
-  return localStorage.getItem("femifresh_admin_token");
+function getAdminToken() {
+  return (
+    localStorage.getItem("femifresh_admin_token") ||
+    localStorage.getItem("ff_admin_token") ||
+    localStorage.getItem("admin_token") ||
+    localStorage.getItem("token") ||
+    ""
+  );
 }
 
 async function adminFetch(url, options = {}) {
@@ -71,93 +78,109 @@ async function adminFetch(url, options = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token(),
+      Authorization: "Bearer " + getAdminToken(),
       ...(options.headers || {})
     }
   });
 
-  if (res.status === 401 || res.status === 403) {
-    alert("You are not allowed to access this page.");
-    location.href = "/admin/login.html";
-    return {};
+  const data = await res.json().catch(() => ({
+    success: false,
+    message: "Server returned an invalid response."
+  }));
+
+  if (!res.ok) {
+    throw new Error(data.message || "Request failed with status " + res.status);
   }
 
-  return res.json();
+  return data;
 }
 
 async function loadAffiliates() {
-  const data = await adminFetch("/api/admin/affiliates");
   const rows = document.getElementById("affiliateRows");
+  const errBox = document.getElementById("affiliateError");
 
-  if (!data.success) {
-    rows.innerHTML = '<tr><td colspan="9">Failed to load affiliates.</td></tr>';
-    return;
+  errBox.style.display = "none";
+  rows.innerHTML = '<tr><td colspan="9">Loading...</td></tr>';
+
+  try {
+    const data = await adminFetch("/api/admin/affiliates");
+
+    if (!data.success) {
+      throw new Error(data.message || "Failed to load affiliates.");
+    }
+
+    if (!data.affiliates || !data.affiliates.length) {
+      rows.innerHTML = '<tr><td colspan="9">No affiliates yet.</td></tr>';
+      return;
+    }
+
+    rows.innerHTML = data.affiliates.map(a => {
+      const fullName = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "---";
+      const activeText = a.selfActive ? "Active" : "Inactive";
+      const joining = a.joiningFeeStatus || "pending";
+
+      return `
+        <tr>
+          <td>
+            <strong>${fullName}</strong><br>
+            <small>${a.accountStatus || ""}</small>
+          </td>
+          <td>
+            ${a.email || ""}<br>
+            <small>${a.phone || ""}</small>
+          </td>
+          <td><strong>${a.referralCode || "---"}</strong></td>
+          <td>${a.sponsorCode || "---"}</td>
+          <td><span class="status-pill">${joining}</span></td>
+          <td><span class="status-pill">${activeText}</span></td>
+          <td>${a.activeDirectRecruits || 0} / ${a.directRecruits || 0}</td>
+          <td>
+            Counted: ${money(a.targetBonusCounted)}<br>
+            Payable: ${money(a.targetBonusPayable)}
+          </td>
+          <td class="action-stack">
+            <button onclick="markJoiningPaid('${a.id}')">Mark Joining Paid</button>
+            <button onclick="toggleActive('${a.id}')">Toggle Active</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  } catch (e) {
+    rows.innerHTML = '<tr><td colspan="9">Could not load affiliates.</td></tr>';
+    errBox.textContent = e.message;
+    errBox.style.display = "block";
   }
-
-  if (!data.affiliates.length) {
-    rows.innerHTML = '<tr><td colspan="9">No affiliates yet.</td></tr>';
-    return;
-  }
-
-  rows.innerHTML = data.affiliates.map(a => {
-    const activeText = a.selfActive ? "Active" : "Inactive";
-    const joining = a.joiningFeeStatus || "pending";
-
-    return `
-      <tr>
-        <td>
-          <strong>${a.fullName || ((a.firstName || "") + " " + (a.lastName || ""))}</strong><br>
-          <small>${a.accountStatus || ""}</small>
-        </td>
-        <td>
-          ${a.email || ""}<br>
-          <small>${a.phone || ""}</small>
-        </td>
-        <td><strong>${a.referralCode || "---"}</strong></td>
-        <td>${a.sponsorCode || "---"}</td>
-        <td><span class="status-pill">${joining}</span></td>
-        <td><span class="status-pill">${activeText}</span></td>
-        <td>${a.activeDirectRecruits || 0} / ${a.directRecruits || 0}</td>
-        <td>
-          Counted: ${money(a.targetBonusCounted)}<br>
-          Payable: ${money(a.targetBonusPayable)}
-        </td>
-        <td class="action-stack">
-          <button onclick="markJoiningPaid('${a.id}')">Mark Joining Paid</button>
-          <button onclick="toggleActive('${a.id}')">Toggle Active</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
 }
 
 async function markJoiningPaid(id) {
   if (!confirm("Mark this affiliate joining fee as paid?")) return;
 
-  const data = await adminFetch("/api/admin/affiliates/" + id + "/mark-joining-paid", {
-    method: "POST",
-    body: JSON.stringify({})
-  });
+  try {
+    const data = await adminFetch("/api/admin/affiliates/" + id + "/mark-joining-paid", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
 
-  if (data.success) {
+    if (!data.success) throw new Error(data.message || "Failed.");
     loadAffiliates();
-  } else {
-    alert(data.message || "Failed.");
+  } catch (e) {
+    alert(e.message);
   }
 }
 
 async function toggleActive(id) {
   const month = new Date().toISOString().slice(0, 7);
 
-  const data = await adminFetch("/api/admin/affiliates/" + id + "/toggle-active", {
-    method: "POST",
-    body: JSON.stringify({ month })
-  });
+  try {
+    const data = await adminFetch("/api/admin/affiliates/" + id + "/toggle-active", {
+      method: "POST",
+      body: JSON.stringify({ month })
+    });
 
-  if (data.success) {
+    if (!data.success) throw new Error(data.message || "Failed.");
     loadAffiliates();
-  } else {
-    alert(data.message || "Failed.");
+  } catch (e) {
+    alert(e.message);
   }
 }
 

@@ -782,6 +782,63 @@ function affiliateAdminSafeAuth(req, res, next) {
 }
 // END AFFILIATE_ADMIN_SAFE_MIDDLEWARE_V1
 
+
+
+// AFFILIATE_ADMIN_AUTH_V2
+function affiliateAdminAuthV2(req, res, next) {
+  try {
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Admin login required." });
+    }
+
+    let payload = null;
+
+    try {
+      if (typeof jwt !== "undefined") {
+        payload = jwt.verify(token, process.env.JWT_SECRET || "femifresh_super_secure_secret_2026_change_later");
+      }
+    } catch (e) {
+      try {
+        if (typeof jwt !== "undefined") payload = jwt.decode(token);
+      } catch (_) {}
+    }
+
+    const role = payload?.role || payload?.adminRole || payload?.type || "";
+    if (role === "super_admin" || role === "superadmin" || role === "admin") {
+      req.adminUser = payload;
+      return next();
+    }
+
+    const storesToCheck = ["users", "adminUsers", "admins"];
+    for (const storeName of storesToCheck) {
+      const users = read(storeName, []);
+      const found = users.find(u =>
+        u.token === token ||
+        u.adminToken === token ||
+        u.sessionToken === token ||
+        (payload?.email && String(u.email).toLowerCase() === String(payload.email).toLowerCase()) ||
+        (payload?.id && u.id === payload.id)
+      );
+
+      if (found) {
+        const foundRole = found.role || found.adminRole || found.type || "";
+        if (foundRole === "super_admin" || foundRole === "superadmin" || foundRole === "admin") {
+          req.adminUser = found;
+          return next();
+        }
+      }
+    }
+
+    return res.status(403).json({ success: false, message: "Super Admin only." });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+}
+// END AFFILIATE_ADMIN_AUTH_V2
+
 // AFFILIATE_ADMIN_API_V1
 function safeAffiliateAdmin(a) {
   if (!a) return null;
@@ -789,7 +846,7 @@ function safeAffiliateAdmin(a) {
   return safe;
 }
 
-app.get("/api/admin/affiliates", affiliateAdminSafeAuth, (req, res) => {
+app.get("/api/admin/affiliates", affiliateAdminAuthV2, (req, res) => {
   const affiliates = read("affiliates", []);
   const month = new Date().toISOString().slice(0, 7);
 
@@ -810,7 +867,7 @@ app.get("/api/admin/affiliates", affiliateAdminSafeAuth, (req, res) => {
   res.json({ success: true, affiliates: list });
 });
 
-app.post("/api/admin/affiliates/:id/mark-joining-paid", affiliateAdminSafeAuth, (req, res) => {
+app.post("/api/admin/affiliates/:id/mark-joining-paid", affiliateAdminAuthV2, (req, res) => {
   const affiliates = read("affiliates", []);
   const affiliate = affiliates.find(a => a.id === req.params.id);
 
@@ -828,7 +885,7 @@ app.post("/api/admin/affiliates/:id/mark-joining-paid", affiliateAdminSafeAuth, 
   res.json({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
 });
 
-app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminSafeAuth, (req, res) => {
+app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminAuthV2, (req, res) => {
   const affiliates = read("affiliates", []);
   const affiliate = affiliates.find(a => a.id === req.params.id);
 
