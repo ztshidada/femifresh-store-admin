@@ -17,7 +17,7 @@
     <a href="/admin/delivery.html">Delivery Methods</a>
     <a href="/admin/users.html">Admin Users</a>
     <a href="/admin/logs.html">Payment & Email Logs</a>
-    <button id="logoutBtn">Logout</button>
+    <button onclick="logoutAdmin()">Logout</button>
   </aside>
 
   <main class="admin-main">
@@ -26,8 +26,10 @@
         <p class="muted">Affiliate Support</p>
         <h1>Affiliate Admin</h1>
       </div>
-      <button class="primary" onclick="recalculate()">Recalculate</button>
+      <button class="primary" onclick="loadEverything()">Refresh</button>
     </div>
+
+    <div id="errorBox" class="admin-alert" style="display:none;"></div>
 
     <section class="metric-grid" id="overviewCards">
       <div class="metric-card"><span>Total Affiliates</span><strong>...</strong></div>
@@ -44,8 +46,6 @@
         </div>
         <input class="admin-search" id="searchInput" placeholder="Search name, phone, email, code..." oninput="loadAffiliates()">
       </div>
-
-      <div id="errorBox" class="admin-alert" style="display:none;"></div>
 
       <div class="table-wrap">
         <table class="admin-table">
@@ -71,35 +71,37 @@
   </main>
 </div>
 
-<script src="/admin/js/admin.js"></script>
 <script>
 const money = n => "R" + Number(n || 0).toFixed(2);
 
-function adminToken() {
-  const direct =
-    localStorage.getItem("femifresh_admin_token") ||
-    localStorage.getItem("ff_admin_token") ||
-    localStorage.getItem("admin_token") ||
-    localStorage.getItem("adminToken") ||
-    localStorage.getItem("token") ||
-    "";
+function showError(message) {
+  const box = document.getElementById("errorBox");
+  box.textContent = message;
+  box.style.display = "block";
+  console.error(message);
+}
 
-  if (direct) return direct;
-
-  const possibleObjects = [
-    "femifresh_admin",
-    "ff_admin",
-    "admin",
-    "user",
-    "adminUser"
+function getToken() {
+  const keys = [
+    "femifresh_admin_token",
+    "ff_admin_token",
+    "admin_token",
+    "adminToken",
+    "token"
   ];
 
-  for (const key of possibleObjects) {
+  for (const key of keys) {
+    const value = localStorage.getItem(key);
+    if (value) return value;
+  }
+
+  const objectKeys = ["femifresh_admin", "ff_admin", "admin", "adminUser", "user"];
+  for (const key of objectKeys) {
     try {
-      const value = JSON.parse(localStorage.getItem(key) || "null");
-      if (value?.token) return value.token;
-      if (value?.adminToken) return value.adminToken;
-      if (value?.accessToken) return value.accessToken;
+      const obj = JSON.parse(localStorage.getItem(key) || "null");
+      if (obj?.token) return obj.token;
+      if (obj?.adminToken) return obj.adminToken;
+      if (obj?.accessToken) return obj.accessToken;
     } catch (e) {}
   }
 
@@ -107,23 +109,41 @@ function adminToken() {
 }
 
 async function api(url, options = {}) {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Admin token missing. Please logout and login again as Super Admin.");
+  }
+
   const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + adminToken(),
+      Authorization: "Bearer " + token,
       ...(options.headers || {})
     }
   });
 
-  const data = await res.json().catch(() => ({ success:false, message:"Invalid server response" }));
-  if (!res.ok) throw new Error(data.message || "Request failed");
+  const text = await res.text();
+  let data = {};
+
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error("Invalid API response: " + text.slice(0, 200));
+  }
+
+  if (!res.ok) {
+    throw new Error(data.message || "API failed with status " + res.status);
+  }
+
   return data;
 }
 
 async function loadOverview() {
   const data = await api("/api/aff-admin/overview");
   const o = data.overview;
+
   document.getElementById("overviewCards").innerHTML = `
     <div class="metric-card"><span>Total Affiliates</span><strong>${o.totalAffiliates}</strong></div>
     <div class="metric-card"><span>Active This Month</span><strong>${o.activeThisMonth}</strong></div>
@@ -132,103 +152,69 @@ async function loadOverview() {
   `;
 }
 
-let loadTimer;
+let searchTimer;
 function loadAffiliates() {
-  clearTimeout(loadTimer);
-  loadTimer = setTimeout(loadAffiliatesNow, 250);
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadAffiliatesNow, 250);
 }
 
 async function loadAffiliatesNow() {
   const q = document.getElementById("searchInput").value.trim();
   const rows = document.getElementById("rows");
-  const errorBox = document.getElementById("errorBox");
 
-  errorBox.style.display = "none";
-  rows.innerHTML = '<tr><td colspan="9">Loading...</td></tr>';
+  rows.innerHTML = '<tr><td colspan="9">Loading affiliates...</td></tr>';
 
-  try {
-    const data = await api("/api/aff-admin/affiliates?q=" + encodeURIComponent(q));
+  const data = await api("/api/aff-admin/affiliates?q=" + encodeURIComponent(q));
 
-    if (!data.affiliates.length) {
-      rows.innerHTML = '<tr><td colspan="9">No affiliates found.</td></tr>';
-      return;
-    }
-
-    rows.innerHTML = data.affiliates.map(a => {
-      const s = a.stats || {};
-      const name = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "---";
-
-      return `
-        <tr>
-          <td>
-            <strong>${name}</strong><br>
-            <small>${a.email || ""}<br>${a.phone || ""}</small>
-          </td>
-          <td><strong>${a.referralCode || "---"}</strong></td>
-          <td>${a.sponsorCode || "---"}</td>
-          <td><span class="status-pill">${a.joiningFeeStatus || "pending"}</span></td>
-          <td><span class="status-pill">${s.selfActive ? "Active" : "Inactive"}</span></td>
-          <td>${s.activeDirectRecruits || 0} / ${s.directRecruits || 0}</td>
-          <td>
-            Counted: <strong>${money(s.totalCounted)}</strong><br>
-            Payable: <strong>${money(s.totalPayable)}</strong>
-          </td>
-          <td>${a.payoutBlocked ? "Blocked" : "No"}</td>
-          <td><a class="mini-btn" href="/admin/affiliate-profile.html?id=${a.id}">Open</a></td>
-        </tr>
-      `;
-    }).join("");
-  } catch (e) {
-    rows.innerHTML = '<tr><td colspan="9">Could not load affiliates.</td></tr>';
-    errorBox.textContent = e.message;
-    errorBox.style.display = "block";
-  }
-}
-
-async function recalculate() {
-  try {
-    const data = await api("/api/aff-admin/recalculate", {
-      method: "POST",
-      body: JSON.stringify({})
-    });
-    alert("Recalculated " + data.count + " affiliates.");
-    loadOverview();
-    loadAffiliatesNow();
-  } catch (e) {
-    alert(e.message);
-  }
-}
-
-async function startAffiliateAdmin() {
-  const rows = document.getElementById("rows");
-  const errorBox = document.getElementById("errorBox");
-
-  if (!adminToken()) {
-    rows.innerHTML = '<tr><td colspan="9">Admin token missing. Please logout and login again.</td></tr>';
-    errorBox.textContent = "Admin token missing. Please login again as Super Admin.";
-    errorBox.style.display = "block";
+  if (!data.affiliates || !data.affiliates.length) {
+    rows.innerHTML = '<tr><td colspan="9">No affiliates found.</td></tr>';
     return;
   }
 
-  try {
-    await loadOverview();
-  } catch (e) {
-    console.error("Overview error:", e);
-    errorBox.textContent = "Overview error: " + e.message;
-    errorBox.style.display = "block";
-  }
+  rows.innerHTML = data.affiliates.map(a => {
+    const s = a.stats || {};
+    const name = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "---";
+
+    return `
+      <tr>
+        <td>
+          <strong>${name}</strong><br>
+          <small>${a.email || ""}<br>${a.phone || ""}</small>
+        </td>
+        <td><strong>${a.referralCode || "---"}</strong></td>
+        <td>${a.sponsorCode || "---"}</td>
+        <td><span class="status-pill">${a.joiningFeeStatus || "pending"}</span></td>
+        <td><span class="status-pill">${s.selfActive ? "Active" : "Inactive"}</span></td>
+        <td>${s.activeDirectRecruits || 0} / ${s.directRecruits || 0}</td>
+        <td>
+          Counted: <strong>${money(s.totalCounted)}</strong><br>
+          Payable: <strong>${money(s.totalPayable)}</strong>
+        </td>
+        <td>${a.payoutBlocked ? "Blocked" : "No"}</td>
+        <td><a class="mini-btn" href="/admin/affiliate-profile.html?id=${a.id}">Open</a></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function loadEverything() {
+  document.getElementById("errorBox").style.display = "none";
 
   try {
+    await loadOverview();
     await loadAffiliatesNow();
   } catch (e) {
-    console.error("Affiliates error:", e);
-    rows.innerHTML = '<tr><td colspan="9">Could not load affiliates.</td></tr>';
-    errorBox.textContent = "Affiliates error: " + e.message;
-    errorBox.style.display = "block";
+    document.getElementById("rows").innerHTML = '<tr><td colspan="9">Could not load affiliate data.</td></tr>';
+    showError(e.message);
   }
 }
 
-startAffiliateAdmin();
+function logoutAdmin() {
+  localStorage.clear();
+  location.href = "/admin/login.html";
+}
+
+loadEverything();
 </script>
 </body>
 </html>
