@@ -1423,4 +1423,162 @@ function affiliateSystemAdminAuth(req, res, next) {
 }
 // END AFFILIATE_ADMIN_AUTH_COOKIE_FINAL_V5
 
+
+
+// AFFILIATE_MEMBER_DASHBOARD_V2
+function affiliateSafeMemberV2(a) {
+  if (!a) return null;
+  const { passwordHash, token, ...safe } = a;
+  return safe;
+}
+
+function affiliateMonthV2() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function affiliateIsActiveV2(a, month = affiliateMonthV2()) {
+  return Array.isArray(a.activeMonths) && a.activeMonths.includes(month);
+}
+
+function getAffiliateTokenV2(req) {
+  const auth = req.headers.authorization || "";
+  return auth.startsWith("Bearer ") ? auth.slice(7) : "";
+}
+
+function getLoggedAffiliateV2(req) {
+  const token = getAffiliateTokenV2(req);
+  if (!token) return null;
+  const affiliates = read("affiliates", []);
+  return affiliates.find(a => a.token === token) || null;
+}
+
+function calculateAffiliateMemberStatsV2(affiliate, affiliates, month = affiliateMonthV2()) {
+  const directs = affiliates.filter(a => a.sponsorId === affiliate.id || a.sponsorCode === affiliate.referralCode);
+  const activeDirects = directs.filter(a => affiliateIsActiveV2(a, month));
+  const selfActive = affiliateIsActiveV2(affiliate, month);
+
+  const referralBonusCounted = activeDirects.length * 300;
+  const targetBonusCounted = activeDirects.length >= 10 ? 1000 : 0;
+  const totalCounted = referralBonusCounted + targetBonusCounted;
+
+  const payoutBlocked = affiliate.payoutBlocked === true;
+  const totalPayable = selfActive && !payoutBlocked ? totalCounted : 0;
+  const totalBlocked = totalCounted - totalPayable;
+
+  let blockedReason = "";
+  if (totalCounted > 0 && !selfActive) blockedReason = "You are not active this month. Buy R1350 stock to unlock payout.";
+  if (totalCounted > 0 && payoutBlocked) blockedReason = affiliate.payoutBlockedReason || "Payout is blocked by admin.";
+
+  return {
+    month,
+    selfActive,
+    directRecruits: directs.length,
+    activeDirectRecruits: activeDirects.length,
+    referralBonusCounted,
+    targetBonusCounted,
+    totalCounted,
+    totalPayable,
+    totalBlocked,
+    blockedReason,
+    needsForTarget: Math.max(0, 10 - activeDirects.length)
+  };
+}
+
+app.get("/api/affiliate/dashboard-v2", (req, res) => {
+  const affiliate = getLoggedAffiliateV2(req);
+
+  if (!affiliate) {
+    return res.status(401).json({ success: false, message: "Affiliate login required." });
+  }
+
+  const affiliates = read("affiliates", []);
+  const month = affiliateMonthV2();
+
+  const sponsor = affiliates.find(a => a.id === affiliate.sponsorId || a.referralCode === affiliate.sponsorCode) || null;
+  const directs = affiliates
+    .filter(a => a.sponsorId === affiliate.id || a.sponsorCode === affiliate.referralCode)
+    .map(a => ({
+      ...affiliateSafeMemberV2(a),
+      activeThisMonth: affiliateIsActiveV2(a, month)
+    }));
+
+  const baseUrl = (process.env.AFFILIATE_URL || process.env.APP_URL || req.protocol + "://" + req.get("host")).replace(/\/$/, "");
+
+  res.json({
+    success: true,
+    affiliate: affiliateSafeMemberV2(affiliate),
+    sponsor: affiliateSafeMemberV2(sponsor),
+    stats: calculateAffiliateMemberStatsV2(affiliate, affiliates, month),
+    directs,
+    referralLink: baseUrl + "/?ref=" + encodeURIComponent(affiliate.referralCode || "")
+  });
+});
+
+app.post("/api/affiliate/buy-stock-v2", async (req, res) => {
+  try {
+    const affiliate = getLoggedAffiliateV2(req);
+
+    if (!affiliate) {
+      return res.status(401).json({ success: false, message: "Affiliate login required." });
+    }
+
+    const baseUrl = (process.env.AFFILIATE_URL || process.env.APP_URL || req.protocol + "://" + req.get("host")).replace(/\/$/, "");
+
+    if (!process.env.YOCO_SECRET_KEY) {
+      return res.json({
+        success: true,
+        payment: "placeholder",
+        checkoutUrl: baseUrl + "/dashboard?stock=placeholder"
+      });
+    }
+
+    const body = {
+      amount: 135000,
+      currency: "ZAR",
+      successUrl: baseUrl + "/dashboard?stock=success",
+      cancelUrl: baseUrl + "/dashboard?stock=cancelled",
+      failureUrl: baseUrl + "/dashboard?stock=failed",
+      metadata: {
+        purpose: "affiliate_stock_activation",
+        affiliateId: affiliate.id,
+        affiliateCode: affiliate.referralCode,
+        affiliateEmail: affiliate.email,
+        month: affiliateMonthV2()
+      }
+    };
+
+    const response = await fetch("https://payments.yoco.com/api/checkouts", {
+      method: "POST",
+      headers: typeof yocoHeaders === "function"
+        ? yocoHeaders()
+        : {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + process.env.YOCO_SECRET_KEY
+          },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return res.status(400).json({
+        success: false,
+        message: "Could not create stock checkout.",
+        error: data
+      });
+    }
+
+    const checkoutUrl = data.redirectUrl || data.redirect_url || data.checkoutUrl || data.checkout_url || data.url;
+
+    res.json({
+      success: true,
+      payment: "yoco",
+      checkoutUrl: checkoutUrl || baseUrl + "/dashboard?stock=created"
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+// END AFFILIATE_MEMBER_DASHBOARD_V2
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

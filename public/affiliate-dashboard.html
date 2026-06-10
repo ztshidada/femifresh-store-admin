@@ -2,52 +2,172 @@
 <html>
 <head>
   <title>Affiliate Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <main class="affiliate-page">
-  <section class="container affiliate-dashboard">
-    <h1 id="welcomeName">Welcome</h1>
-    <div class="dash-grid">
+  <section class="container affiliate-dashboard-v2">
+    <div class="dash-topline">
+      <div>
+        <p class="muted">FemiFresh Affiliate</p>
+        <h1 id="welcomeName">Welcome</h1>
+      </div>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div id="noticeBox" class="affiliate-notice" style="display:none;"></div>
+
+    <div class="dash-grid-v2">
       <div class="dash-card"><span>Referral Code</span><strong id="referralCode">---</strong></div>
       <div class="dash-card"><span>Account Status</span><strong id="accountStatus">---</strong></div>
-      <div class="dash-card"><span>Active Directs</span><strong id="activeDirects">0</strong></div>
-      <div class="dash-card"><span>Target Bonus Payable</span><strong id="targetPayable">R0</strong></div>
+      <div class="dash-card"><span>Active This Month</span><strong id="selfActive">---</strong></div>
+      <div class="dash-card"><span>Active Directs</span><strong id="activeDirects">0 / 0</strong></div>
+      <div class="dash-card"><span>Referral Bonus Counted</span><strong id="refBonus">R0</strong></div>
+      <div class="dash-card"><span>Target Bonus Progress</span><strong id="targetProgress">0 / 10</strong></div>
+      <div class="dash-card"><span>Total Counted</span><strong id="totalCounted">R0</strong></div>
+      <div class="dash-card"><span>Total Payable</span><strong id="totalPayable">R0</strong></div>
     </div>
-    <button onclick="copyLink()">Copy Referral Link</button>
-    <button onclick="logout()">Logout</button>
+
+    <section class="affiliate-panel">
+      <div>
+        <h2>Your referral link</h2>
+        <p id="referralLink" class="copy-link-text">---</p>
+      </div>
+      <div class="dash-actions">
+        <button onclick="copyLink()">Copy Referral Link</button>
+        <button onclick="buyStock()">Buy R1350 Stock</button>
+      </div>
+    </section>
+
+    <section class="affiliate-panel">
+      <h2>Payment Status</h2>
+      <div class="info-lines">
+        <p><strong>Joining fee:</strong> <span id="joiningFee">---</span></p>
+        <p><strong>Sponsor:</strong> <span id="sponsorName">---</span></p>
+        <p><strong>Blocked amount:</strong> <span id="blockedAmount">R0</span></p>
+        <p><strong>Blocked reason:</strong> <span id="blockedReason">---</span></p>
+      </div>
+    </section>
+
+    <section class="affiliate-panel">
+      <h2>My Direct Recruits</h2>
+      <div class="affiliate-table-wrap">
+        <table class="affiliate-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Joining</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody id="directRows">
+            <tr><td colspan="4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </section>
 </main>
 
 <script>
-async function loadDash() {
-  const token = localStorage.getItem("ff_affiliate_token");
-  if (!token) return location.href = "/login";
+let dashboardData = null;
+const money = n => "R" + Number(n || 0).toFixed(2);
 
-  const res = await fetch("/api/affiliate/me", {
-    headers: { Authorization: "Bearer " + token }
+function token() {
+  return localStorage.getItem("ff_affiliate_token") || "";
+}
+
+function showNotice(message) {
+  const box = document.getElementById("noticeBox");
+  box.textContent = message;
+  box.style.display = "block";
+}
+
+async function loadDash() {
+  const t = token();
+  if (!t) return location.href = "/login";
+
+  const res = await fetch("/api/affiliate/dashboard-v2", {
+    headers: { Authorization: "Bearer " + t }
   });
 
   const data = await res.json();
-  if (!data.success) return location.href = "/login";
 
-  document.getElementById("welcomeName").textContent = "Welcome, " + data.affiliate.firstName;
-  document.getElementById("referralCode").textContent = data.affiliate.referralCode;
-  document.getElementById("accountStatus").textContent = data.affiliate.accountStatus;
-  document.getElementById("activeDirects").textContent = data.stats.activeDirectRecruits;
-  document.getElementById("targetPayable").textContent = "R" + data.stats.targetBonusPayable;
+  if (!data.success) {
+    localStorage.removeItem("ff_affiliate_token");
+    return location.href = "/login";
+  }
+
+  dashboardData = data;
+  const a = data.affiliate;
+  const s = data.stats;
+
+  document.getElementById("welcomeName").textContent = "Welcome, " + (a.firstName || a.fullName || "Affiliate");
+  document.getElementById("referralCode").textContent = a.referralCode || "---";
+  document.getElementById("accountStatus").textContent = a.accountStatus || "---";
+  document.getElementById("selfActive").textContent = s.selfActive ? "Yes" : "No";
+  document.getElementById("activeDirects").textContent = s.activeDirectRecruits + " / " + s.directRecruits;
+  document.getElementById("refBonus").textContent = money(s.referralBonusCounted);
+  document.getElementById("targetProgress").textContent = s.activeDirectRecruits + " / 10";
+  document.getElementById("totalCounted").textContent = money(s.totalCounted);
+  document.getElementById("totalPayable").textContent = money(s.totalPayable);
+
+  document.getElementById("referralLink").textContent = data.referralLink || "---";
+  document.getElementById("joiningFee").textContent = a.joiningFeeStatus || "pending";
+  document.getElementById("sponsorName").textContent = data.sponsor ? ((data.sponsor.fullName || data.sponsor.email) + " (" + data.sponsor.referralCode + ")") : "---";
+  document.getElementById("blockedAmount").textContent = money(s.totalBlocked);
+  document.getElementById("blockedReason").textContent = s.blockedReason || "---";
+
+  if (!data.directs.length) {
+    document.getElementById("directRows").innerHTML = '<tr><td colspan="4">No direct recruits yet.</td></tr>';
+  } else {
+    document.getElementById("directRows").innerHTML = data.directs.map(d => {
+      const name = d.fullName || ((d.firstName || "") + " " + (d.lastName || "")).trim() || "---";
+      return `
+        <tr>
+          <td>${name}<br><small>${d.email || ""}</small></td>
+          <td><strong>${d.referralCode || "---"}</strong></td>
+          <td>${d.joiningFeeStatus || "pending"}</td>
+          <td>${d.activeThisMonth ? "Active" : "Inactive"}</td>
+        </tr>
+      `;
+    }).join("");
+  }
 }
 
 function copyLink() {
-  const code = document.getElementById("referralCode").textContent;
-  const link = location.origin + "/?ref=" + code;
+  const link = dashboardData?.referralLink || document.getElementById("referralLink").textContent;
   navigator.clipboard.writeText(link);
-  alert("Copied: " + link);
+  showNotice("Referral link copied.");
+}
+
+async function buyStock() {
+  const res = await fetch("/api/affiliate/buy-stock-v2", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token() }
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    showNotice(data.message || "Could not start stock payment.");
+    return;
+  }
+
+  location.href = data.checkoutUrl;
 }
 
 function logout() {
   localStorage.removeItem("ff_affiliate_token");
+  localStorage.removeItem("ff_affiliate");
   location.href = "/login";
+}
+
+const params = new URLSearchParams(location.search);
+if (params.get("stock") === "success") {
+  showNotice("Stock payment received. Activation will update after payment confirmation.");
 }
 
 loadDash();
