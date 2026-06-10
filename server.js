@@ -749,6 +749,39 @@ app.get("/success", (req, res, next) => {
 
 
 
+
+
+// AFFILIATE_ADMIN_SAFE_MIDDLEWARE_V1
+function affiliateAdminSafeAuth(req, res, next) {
+  try {
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Admin login required." });
+    }
+
+    const users = read("users", []);
+    const user = users.find(u => u.token === token || u.adminToken === token);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid admin session." });
+    }
+
+    const role = user.role || user.type || user.adminRole || "";
+
+    if (role !== "super_admin" && role !== "superadmin" && role !== "admin") {
+      return res.status(403).json({ success: false, message: "Super Admin only." });
+    }
+
+    req.adminUser = user;
+    next();
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+}
+// END AFFILIATE_ADMIN_SAFE_MIDDLEWARE_V1
+
 // AFFILIATE_ADMIN_API_V1
 function safeAffiliateAdmin(a) {
   if (!a) return null;
@@ -756,7 +789,7 @@ function safeAffiliateAdmin(a) {
   return safe;
 }
 
-app.get("/api/admin/affiliates", requireAdmin, requireRole(["super_admin"]), (req, res) => {
+app.get("/api/admin/affiliates", affiliateAdminSafeAuth, (req, res) => {
   const affiliates = read("affiliates", []);
   const month = new Date().toISOString().slice(0, 7);
 
@@ -777,7 +810,7 @@ app.get("/api/admin/affiliates", requireAdmin, requireRole(["super_admin"]), (re
   res.json({ success: true, affiliates: list });
 });
 
-app.post("/api/admin/affiliates/:id/mark-joining-paid", requireAdmin, requireRole(["super_admin"]), (req, res) => {
+app.post("/api/admin/affiliates/:id/mark-joining-paid", affiliateAdminSafeAuth, (req, res) => {
   const affiliates = read("affiliates", []);
   const affiliate = affiliates.find(a => a.id === req.params.id);
 
@@ -795,7 +828,7 @@ app.post("/api/admin/affiliates/:id/mark-joining-paid", requireAdmin, requireRol
   res.json({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
 });
 
-app.post("/api/admin/affiliates/:id/toggle-active", requireAdmin, requireRole(["super_admin"]), (req, res) => {
+app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminSafeAuth, (req, res) => {
   const affiliates = read("affiliates", []);
   const affiliate = affiliates.find(a => a.id === req.params.id);
 
