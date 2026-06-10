@@ -747,4 +747,76 @@ app.get("/success", (req, res, next) => {
 });
 // END AFFILIATE_SUBDOMAIN_ROUTING_V1
 
+
+
+// AFFILIATE_ADMIN_API_V1
+function safeAffiliateAdmin(a) {
+  if (!a) return null;
+  const { passwordHash, token, ...safe } = a;
+  return safe;
+}
+
+app.get("/api/admin/affiliates", requireAdmin, requireRole(["super_admin"]), (req, res) => {
+  const affiliates = read("affiliates", []);
+  const month = new Date().toISOString().slice(0, 7);
+
+  const list = affiliates.map(a => {
+    const directs = affiliates.filter(x => x.sponsorId === a.id);
+    const activeDirects = directs.filter(x => Array.isArray(x.activeMonths) && x.activeMonths.includes(month));
+
+    return {
+      ...safeAffiliateAdmin(a),
+      directRecruits: directs.length,
+      activeDirectRecruits: activeDirects.length,
+      selfActive: Array.isArray(a.activeMonths) && a.activeMonths.includes(month),
+      targetBonusCounted: activeDirects.length >= 10 ? 1000 : 0,
+      targetBonusPayable: (Array.isArray(a.activeMonths) && a.activeMonths.includes(month) && activeDirects.length >= 10) ? 1000 : 0
+    };
+  });
+
+  res.json({ success: true, affiliates: list });
+});
+
+app.post("/api/admin/affiliates/:id/mark-joining-paid", requireAdmin, requireRole(["super_admin"]), (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) {
+    return res.status(404).json({ success: false, message: "Affiliate not found." });
+  }
+
+  affiliate.joiningFeeStatus = "paid";
+  affiliate.accountStatus = "approved";
+  affiliate.joiningFeePaidAt = new Date().toISOString();
+  affiliate.updatedAt = new Date().toISOString();
+
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
+});
+
+app.post("/api/admin/affiliates/:id/toggle-active", requireAdmin, requireRole(["super_admin"]), (req, res) => {
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a => a.id === req.params.id);
+
+  if (!affiliate) {
+    return res.status(404).json({ success: false, message: "Affiliate not found." });
+  }
+
+  const month = (req.body && req.body.month) || new Date().toISOString().slice(0, 7);
+  affiliate.activeMonths = Array.isArray(affiliate.activeMonths) ? affiliate.activeMonths : [];
+
+  if (affiliate.activeMonths.includes(month)) {
+    affiliate.activeMonths = affiliate.activeMonths.filter(m => m !== month);
+  } else {
+    affiliate.activeMonths.push(month);
+  }
+
+  affiliate.updatedAt = new Date().toISOString();
+  write("affiliates", affiliates);
+
+  res.json({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
+});
+// END AFFILIATE_ADMIN_API_V1
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

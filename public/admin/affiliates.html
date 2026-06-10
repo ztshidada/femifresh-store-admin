@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Affiliates - FemiFresh Admin</title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="sidebar">
+    <h2>FemiFresh</h2>
+    <a href="/admin/dashboard.html">Dashboard</a>
+    <a href="/admin/orders.html">Orders</a>
+    <a href="/admin/affiliates.html" data-super-only>Affiliates</a>
+    <a href="/admin/products.html" data-super-only>Products</a>
+    <a href="/admin/delivery.html" data-super-only>Delivery</a>
+    <a href="/admin/users.html" data-super-only>Users</a>
+    <a href="/admin/logs.html" data-super-only>Logs</a>
+    <a href="/admin/settings.html" data-super-only>Settings</a>
+    <button id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <div>
+        <p class="muted">Super Admin Only</p>
+        <h1>Affiliate Admin</h1>
+      </div>
+      <button class="primary" onclick="loadAffiliates()">Refresh</button>
+    </div>
+
+    <section class="panel">
+      <h2>Affiliate Accounts</h2>
+      <p class="muted">Manage joining fee status, active status, referral codes and sponsor tracking.</p>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Referral Code</th>
+              <th>Sponsor</th>
+              <th>Joining Fee</th>
+              <th>Active</th>
+              <th>Directs</th>
+              <th>Target Bonus</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="affiliateRows">
+            <tr><td colspan="9">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/admin/js/admin.js"></script>
+<script>
+const money = n => "R" + Number(n || 0).toFixed(2);
+
+function token() {
+  return localStorage.getItem("femifresh_admin_token");
+}
+
+async function adminFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token(),
+      ...(options.headers || {})
+    }
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    alert("You are not allowed to access this page.");
+    location.href = "/admin/login.html";
+    return {};
+  }
+
+  return res.json();
+}
+
+async function loadAffiliates() {
+  const data = await adminFetch("/api/admin/affiliates");
+  const rows = document.getElementById("affiliateRows");
+
+  if (!data.success) {
+    rows.innerHTML = '<tr><td colspan="9">Failed to load affiliates.</td></tr>';
+    return;
+  }
+
+  if (!data.affiliates.length) {
+    rows.innerHTML = '<tr><td colspan="9">No affiliates yet.</td></tr>';
+    return;
+  }
+
+  rows.innerHTML = data.affiliates.map(a => {
+    const activeText = a.selfActive ? "Active" : "Inactive";
+    const joining = a.joiningFeeStatus || "pending";
+
+    return `
+      <tr>
+        <td>
+          <strong>${a.fullName || ((a.firstName || "") + " " + (a.lastName || ""))}</strong><br>
+          <small>${a.accountStatus || ""}</small>
+        </td>
+        <td>
+          ${a.email || ""}<br>
+          <small>${a.phone || ""}</small>
+        </td>
+        <td><strong>${a.referralCode || "---"}</strong></td>
+        <td>${a.sponsorCode || "---"}</td>
+        <td><span class="status-pill">${joining}</span></td>
+        <td><span class="status-pill">${activeText}</span></td>
+        <td>${a.activeDirectRecruits || 0} / ${a.directRecruits || 0}</td>
+        <td>
+          Counted: ${money(a.targetBonusCounted)}<br>
+          Payable: ${money(a.targetBonusPayable)}
+        </td>
+        <td class="action-stack">
+          <button onclick="markJoiningPaid('${a.id}')">Mark Joining Paid</button>
+          <button onclick="toggleActive('${a.id}')">Toggle Active</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function markJoiningPaid(id) {
+  if (!confirm("Mark this affiliate joining fee as paid?")) return;
+
+  const data = await adminFetch("/api/admin/affiliates/" + id + "/mark-joining-paid", {
+    method: "POST",
+    body: JSON.stringify({})
+  });
+
+  if (data.success) {
+    loadAffiliates();
+  } else {
+    alert(data.message || "Failed.");
+  }
+}
+
+async function toggleActive(id) {
+  const month = new Date().toISOString().slice(0, 7);
+
+  const data = await adminFetch("/api/admin/affiliates/" + id + "/toggle-active", {
+    method: "POST",
+    body: JSON.stringify({ month })
+  });
+
+  if (data.success) {
+    loadAffiliates();
+  } else {
+    alert(data.message || "Failed.");
+  }
+}
+
+loadAffiliates();
+</script>
+</body>
+</html>

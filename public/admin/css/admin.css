@@ -33,3 +33,56 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Affiliate admin + product stock extras */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 14px;
+  border-bottom: 1px solid rgba(107, 31, 100, 0.12);
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: #6b1f64;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f7e6f4;
+  color: #6b1f64;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.action-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.action-stack button {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #6b1f64;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
