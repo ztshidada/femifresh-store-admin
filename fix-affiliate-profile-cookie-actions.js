@@ -1,4 +1,9 @@
-<!doctype html>
+const fs = require("fs");
+const path = require("path");
+
+const profilePage = path.join(__dirname, "public", "admin", "affiliate-profile.html");
+
+const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -135,28 +140,28 @@ async function loadProfile() {
     const name = a.fullName || ((a.firstName || "") + " " + (a.lastName || "")).trim() || "Affiliate";
     document.getElementById("profileName").textContent = name;
 
-    document.getElementById("profileMetrics").innerHTML = `
-      <div class="metric-card"><span>Referral Code</span><strong>${a.referralCode || "---"}</strong></div>
-      <div class="metric-card"><span>Active Directs</span><strong>${s.activeDirectRecruits || 0} / ${s.directRecruits || 0}</strong></div>
-      <div class="metric-card"><span>Total Counted</span><strong>${money(s.totalCounted)}</strong></div>
-      <div class="metric-card"><span>Total Payable</span><strong>${money(s.totalPayable)}</strong></div>
-    `;
+    document.getElementById("profileMetrics").innerHTML = \`
+      <div class="metric-card"><span>Referral Code</span><strong>\${a.referralCode || "---"}</strong></div>
+      <div class="metric-card"><span>Active Directs</span><strong>\${s.activeDirectRecruits || 0} / \${s.directRecruits || 0}</strong></div>
+      <div class="metric-card"><span>Total Counted</span><strong>\${money(s.totalCounted)}</strong></div>
+      <div class="metric-card"><span>Total Payable</span><strong>\${money(s.totalPayable)}</strong></div>
+    \`;
 
-    document.getElementById("accountDetails").innerHTML = `
+    document.getElementById("accountDetails").innerHTML = \`
       <div class="info-lines">
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${a.email || "---"}</p>
-        <p><strong>Phone:</strong> ${a.phone || "---"}</p>
-        <p><strong>Referral Code:</strong> ${a.referralCode || "---"}</p>
-        <p><strong>Sponsor:</strong> ${data.sponsor ? ((data.sponsor.fullName || data.sponsor.email) + " (" + data.sponsor.referralCode + ")") : "---"}</p>
-        <p><strong>Joining Fee:</strong> ${a.joiningFeeStatus || "pending"}</p>
-        <p><strong>Account Status:</strong> ${a.accountStatus || "---"}</p>
-        <p><strong>Active this month:</strong> ${s.selfActive ? "Yes" : "No"}</p>
-        <p><strong>Blocked:</strong> ${a.payoutBlocked ? "Yes" : "No"}</p>
-        <p><strong>Blocked reason:</strong> ${a.payoutBlockedReason || s.blockedReason || "---"}</p>
-        <p><strong>Needs for target bonus:</strong> ${s.needsForTarget || 0} more active directs</p>
+        <p><strong>Name:</strong> \${name}</p>
+        <p><strong>Email:</strong> \${a.email || "---"}</p>
+        <p><strong>Phone:</strong> \${a.phone || "---"}</p>
+        <p><strong>Referral Code:</strong> \${a.referralCode || "---"}</p>
+        <p><strong>Sponsor:</strong> \${data.sponsor ? ((data.sponsor.fullName || data.sponsor.email) + " (" + data.sponsor.referralCode + ")") : "---"}</p>
+        <p><strong>Joining Fee:</strong> \${a.joiningFeeStatus || "pending"}</p>
+        <p><strong>Account Status:</strong> \${a.accountStatus || "---"}</p>
+        <p><strong>Active this month:</strong> \${s.selfActive ? "Yes" : "No"}</p>
+        <p><strong>Blocked:</strong> \${a.payoutBlocked ? "Yes" : "No"}</p>
+        <p><strong>Blocked reason:</strong> \${a.payoutBlockedReason || s.blockedReason || "---"}</p>
+        <p><strong>Needs for target bonus:</strong> \${s.needsForTarget || 0} more active directs</p>
       </div>
-    `;
+    \`;
 
     const directs = data.directs || [];
 
@@ -167,16 +172,16 @@ async function loadProfile() {
         const ds = d.stats || {};
         const dname = d.fullName || ((d.firstName || "") + " " + (d.lastName || "")).trim() || "---";
 
-        return `
+        return \`
           <tr>
-            <td><strong>${dname}</strong><br><small>${d.email || ""}</small></td>
-            <td>${d.referralCode || "---"}</td>
-            <td>${d.joiningFeeStatus || "pending"}</td>
-            <td>${ds.selfActive ? "Active" : "Inactive"}</td>
-            <td>Payable: ${money(ds.totalPayable)}</td>
-            <td><a class="mini-btn" href="/admin/affiliate-profile.html?id=${d.id}">Open</a></td>
+            <td><strong>\${dname}</strong><br><small>\${d.email || ""}</small></td>
+            <td>\${d.referralCode || "---"}</td>
+            <td>\${d.joiningFeeStatus || "pending"}</td>
+            <td>\${ds.selfActive ? "Active" : "Inactive"}</td>
+            <td>Payable: \${money(ds.totalPayable)}</td>
+            <td><a class="mini-btn" href="/admin/affiliate-profile.html?id=\${d.id}">Open</a></td>
           </tr>
-        `;
+        \`;
       }).join("");
     }
   } catch (e) {
@@ -248,4 +253,8 @@ function logoutAdmin() {
 loadProfile();
 </script>
 </body>
-</html>
+</html>`;
+
+fs.writeFileSync(profilePage, html);
+
+console.log("Affiliate profile cookie actions fixed.");
