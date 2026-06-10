@@ -89,9 +89,7 @@ function getToken() {
     "adminToken",
     "token",
     "authToken",
-    "accessToken",
-    "femifresh_token",
-    "femifreshAdminToken"
+    "accessToken"
   ];
 
   for (const storage of [localStorage, sessionStorage]) {
@@ -101,17 +99,7 @@ function getToken() {
     }
   }
 
-  const objectKeys = [
-    "femifresh_admin",
-    "ff_admin",
-    "admin",
-    "adminUser",
-    "user",
-    "femifresh_user",
-    "femifreshAdmin",
-    "currentAdmin"
-  ];
-
+  const objectKeys = ["femifresh_admin", "ff_admin", "admin", "adminUser", "user", "currentAdmin"];
   for (const storage of [localStorage, sessionStorage]) {
     for (const key of objectKeys) {
       try {
@@ -119,13 +107,23 @@ function getToken() {
         if (obj?.token) return obj.token;
         if (obj?.adminToken) return obj.adminToken;
         if (obj?.accessToken) return obj.accessToken;
-        if (obj?.jwt) return obj.jwt;
       } catch (e) {}
     }
   }
 
+  if (window.adminToken) return window.adminToken;
+  if (window.token) return window.token;
+  if (window.currentAdmin?.token) return window.currentAdmin.token;
+  if (window.currentUser?.token) return window.currentUser.token;
+
   console.log("LOCAL STORAGE KEYS:", Object.keys(localStorage));
   console.log("SESSION STORAGE KEYS:", Object.keys(sessionStorage));
+  console.log("WINDOW ADMIN VALUES:", {
+    adminToken: window.adminToken,
+    token: window.token,
+    currentAdmin: window.currentAdmin,
+    currentUser: window.currentUser
+  });
 
   return "";
 }
@@ -238,5 +236,6 @@ function logoutAdmin() {
 
 loadEverything();
 </script>
+<script src="/admin/js/admin.js"></script>
 </body>
 </html>
