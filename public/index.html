@@ -650,6 +650,7 @@
 <body>
   
 
+
 <header class="ff-site-header">
   <nav class="ff-nav">
     <a class="ff-brand" href="/">
@@ -860,6 +861,28 @@
       return Number.isFinite(num) && num > 0 ? "R" + num.toFixed(2) : "View product";
     }
 
+    
+    function productImage(p){
+      return (
+        p.image ||
+        p.imageUrl ||
+        p.image_url ||
+        p.photo ||
+        p.photoUrl ||
+        p.thumbnail ||
+        p.mainImage ||
+        p.main_image ||
+        p.picture ||
+        ""
+      );
+    }
+
+    function productPrice(p){
+      const raw = p.price || p.amount || p.sellingPrice || p.salePrice || 0;
+      const num = Number(raw);
+      return Number.isFinite(num) && num > 0 ? "R" + num.toFixed(2) : "View product";
+    }
+
     async function loadFeaturedProducts(){
       const box = document.getElementById("featuredProducts");
 
@@ -877,8 +900,8 @@
 
           return `
             <div class="product-card">
-              <div class="product-img">
-                <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='/images/femifresh-logo.jpg'">
+              <div class="product-img ${img ? "" : "no-image"}">
+                ${img ? `<img src="${img}" alt="${name}" loading="lazy">` : name}
               </div>
               <div class="product-body">
                 <h3>${name}</h3>
@@ -895,6 +918,8 @@
 
     loadFeaturedProducts();
   </script>
+
+
 
 <script>
   const ffMenuBtn = document.getElementById("ffMenuBtn");
