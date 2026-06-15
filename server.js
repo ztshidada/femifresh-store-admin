@@ -701,7 +701,7 @@ app.post("/api/affiliate/login", (req, res) => {
         write("affiliates", affiliates);
       }
     } catch (e) {}
-    emailAffiliateRegistered(affiliate);
+    console.log('Email handled by launch scanner: registered');
   }
 
   res.json({ success: true, affiliate: publicAffiliate(affiliate), token: affiliate.token });
@@ -906,7 +906,7 @@ app.post("/api/admin/affiliates/:id/mark-joining-paid", affiliateAdminAuthV2, (r
 
   if (!affiliate.joiningApprovedEmailSentAt) {
     affiliate.joiningApprovedEmailSentAt = new Date().toISOString();
-    emailAffiliateJoiningApproved(affiliate);
+    console.log('Email handled by launch scanner: joining approved');
   }
 
   write("affiliates", affiliates);
@@ -1246,7 +1246,7 @@ app.post("/api/aff-admin/affiliates/:id/mark-joining-paid", affiliateSystemAdmin
 
   if (!affiliate.joiningApprovedEmailSentAt) {
     affiliate.joiningApprovedEmailSentAt = new Date().toISOString();
-    emailAffiliateJoiningApproved(affiliate);
+    console.log('Email handled by launch scanner: joining approved');
   }
 
   write("affiliates", affiliates);
@@ -1265,7 +1265,7 @@ app.post("/api/aff-admin/affiliates/:id/mark-active", affiliateSystemAdminAuth, 
 
   if (!affiliate.activeMonths.includes(month)) {
     affiliate.activeMonths.push(month);
-    emailAffiliateMarkedActive(affiliate);
+    console.log('Email handled by launch scanner: marked active');
   }
 
   affiliate.updatedAt = new Date().toISOString();
@@ -1300,7 +1300,7 @@ app.post("/api/aff-admin/affiliates/:id/block-payout", affiliateSystemAdminAuth,
   affiliate.payoutBlockedReason = req.body.reason || "Blocked by admin.";
   affiliate.updatedAt = new Date().toISOString();
 
-  emailAffiliatePayoutBlocked(affiliate, affiliate.payoutBlockedReason);
+  console.log('Email handled by launch scanner: payout blocked');
 
   write("affiliates", affiliates);
 
@@ -1317,7 +1317,7 @@ app.post("/api/aff-admin/affiliates/:id/unblock-payout", affiliateSystemAdminAut
   affiliate.payoutBlockedReason = "";
   affiliate.updatedAt = new Date().toISOString();
 
-  emailAffiliatePayoutUnblocked(affiliate);
+  console.log('Email handled by launch scanner: payout unblocked');
 
   write("affiliates", affiliates);
 
@@ -1567,7 +1567,7 @@ app.post("/api/affiliate/buy-stock-v2", async (req, res) => {
 
     const baseUrl = (process.env.AFFILIATE_URL || process.env.APP_URL || req.protocol + "://" + req.get("host")).replace(/\/$/, "");
 
-    emailAffiliateStockCheckoutStarted(affiliate);
+    console.log('Email handled by launch scanner: stock checkout started');
 
     if (!process.env.YOCO_SECRET_KEY) {
       return res.json({
