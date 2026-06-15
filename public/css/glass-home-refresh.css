@@ -309,3 +309,27 @@ button:hover,.btn:hover,a.button:hover{
     line-height:1.5 !important;
   }
 }
+
+
+/* FIX_GLASS_SHOWCASE_ONLY */
+.ff-glass-showcase {
+  width: min(520px, 100%);
+  margin-top: 28px;
+}
+
+.ff-glass-logo-box img {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.ff-glass-logo-box {
+  background: linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.10));
+}
+
+/* Hide old hero image containers when JS marks them */
+.hero-image[style*="display: none"],
+.hero-visual[style*="display: none"],
+.image-card[style*="display: none"],
+.visual[style*="display: none"] {
+  display: none !important;
+}

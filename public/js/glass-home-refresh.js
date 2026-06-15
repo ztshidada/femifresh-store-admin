@@ -203,13 +203,53 @@
     });
   }
 
-  function runHome() {
+  
+function removeOldHeroVisual() {
+  const hero =
+    document.querySelector(".hero") ||
+    document.querySelector(".hero-section") ||
+    Array.from(document.querySelectorAll("section")).find(sec => sec.querySelector("h1"));
+
+  if (!hero) return;
+
+  const imgs = Array.from(hero.querySelectorAll("img"));
+
+  imgs.forEach(img => {
+    if (img.closest(".ff-glass-showcase")) return;
+    if (img.closest("header,.site-header,.navbar")) return;
+
+    const src = (img.getAttribute("src") || "").toLowerCase();
+    const alt = (img.getAttribute("alt") || "").toLowerCase();
+
+    if (
+      src.includes("femifresh") ||
+      alt.includes("femifresh") ||
+      img.width > 180 ||
+      img.height > 120
+    ) {
+      const block =
+        img.closest(".hero-image") ||
+        img.closest(".hero-visual") ||
+        img.closest(".image-card") ||
+        img.closest(".visual") ||
+        img.closest(".card") ||
+        img.closest("div");
+
+      if (block && !block.classList.contains("ff-glass-showcase")) {
+        block.style.display = "none";
+      }
+    }
+  });
+}
+
+function runHome() {
     const hero = getHero();
     if (!hero) return;
 
     styleHero(hero);
     ensureHomeButtons(hero);
     ensureGlassShowcase(hero);
+    removeOldHeroVisual();
     hideBigOverflowingPromo();
     cleanupFeaturedProducts();
     addSoftGlassToCards();
