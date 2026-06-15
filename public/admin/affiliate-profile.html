@@ -53,6 +53,7 @@
           <button onclick="changeSponsor()">Change Sponsor</button>
           <button onclick="blockPayout()">Block Payout</button>
           <button onclick="unblockPayout()">Unblock Payout</button>
+          <button style="background:#b00020;color:white;" onclick="deleteAffiliateAccount()">Delete Account</button>
         </div>
       </div>
     </section>
@@ -239,6 +240,23 @@ function unblockPayout() {
   if (confirm("Unblock payout for this affiliate?")) {
     postAction("/api/aff-admin/affiliates/" + id + "/unblock-payout");
   }
+}
+
+
+function deleteAffiliateAccount() {
+  const confirmText = prompt("This will permanently delete this affiliate account. Type DELETE to confirm.");
+
+  if (confirmText !== "DELETE") {
+    showError("Delete cancelled. You must type DELETE exactly.");
+    return;
+  }
+
+  postAction("/api/aff-admin/affiliates/" + id + "/delete", {
+    confirm: "DELETE"
+  }).then(() => {
+    alert("Affiliate account deleted.");
+    location.href = "/admin/affiliates.html";
+  });
 }
 
 function logoutAdmin() {

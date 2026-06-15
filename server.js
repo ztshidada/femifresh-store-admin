@@ -1816,4 +1816,110 @@ try {
   console.error("Could not start email event scanner:", e.message);
 }
 
+
+
+// SUPER_ADMIN_DELETE_AFFILIATE_V1
+function isFemiSuperAdminForDelete(req) {
+  const u = req.adminUser || req.user || req.admin || {};
+  const role = String(u.role || u.adminRole || u.type || "").toLowerCase();
+  const email = String(u.email || "").toLowerCase();
+
+  return (
+    role === "super_admin" ||
+    role === "superadmin" ||
+    role === "super admin" ||
+    role === "owner" ||
+    email === "admin@femifresh.local" ||
+    email === "ztshidada@gmail.com"
+  );
+}
+
+function deleteAffiliateAccountHandler(req, res) {
+  try {
+    if (!isFemiSuperAdminForDelete(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only Super Admin can delete affiliate accounts."
+      });
+    }
+
+    const affiliateId = req.params.id;
+    const confirm = String(req.body.confirm || "").trim();
+
+    if (confirm !== "DELETE") {
+      return res.status(400).json({
+        success: false,
+        message: "Type DELETE to confirm account deletion."
+      });
+    }
+
+    const affiliates = read("affiliates", []);
+    const index = affiliates.findIndex(a => String(a.id) === String(affiliateId));
+
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Affiliate account not found."
+      });
+    }
+
+    const deleted = affiliates[index];
+
+    const deletedLogs = read("deletedAffiliates", []);
+    deletedLogs.unshift({
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      deletedAt: new Date().toISOString(),
+      deletedBy: req.adminUser || null,
+      affiliate: deleted
+    });
+
+    affiliates.splice(index, 1);
+
+    // Remove this deleted affiliate as sponsor/upline from direct recruits
+    for (const a of affiliates) {
+      if (String(a.sponsorId || "") === String(deleted.id)) {
+        a.sponsorId = "";
+      }
+
+      if (String(a.sponsorCode || "") === String(deleted.referralCode || "")) {
+        a.sponsorCode = "";
+      }
+
+      if (String(a.referredByCode || "") === String(deleted.referralCode || "")) {
+        a.referredByCode = "";
+      }
+
+      if (Array.isArray(a.uplineChain)) {
+        a.uplineChain = a.uplineChain.filter(x =>
+          String(x.id || x.affiliateId || x) !== String(deleted.id) &&
+          String(x.referralCode || x.code || x) !== String(deleted.referralCode || "")
+        );
+      }
+    }
+
+    write("affiliates", affiliates);
+    write("deletedAffiliates", deletedLogs.slice(0, 500));
+
+    return res.json({
+      success: true,
+      message: "Affiliate account deleted.",
+      deletedAffiliate: {
+        id: deleted.id,
+        email: deleted.email,
+        referralCode: deleted.referralCode,
+        fullName: deleted.fullName
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      message: e.message
+    });
+  }
+}
+
+app.post("/api/aff-admin/affiliates/:id/delete", affiliateSystemAdminAuth, deleteAffiliateAccountHandler);
+app.delete("/api/aff-admin/affiliates/:id", affiliateSystemAdminAuth, deleteAffiliateAccountHandler);
+// END SUPER_ADMIN_DELETE_AFFILIATE_V1
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
