@@ -53,11 +53,13 @@
       border: 1px solid rgba(107, 31, 100, .25);
     }
 
-    @media (max-width: 650px) {
+    @media (max-width: 650px) {\n      /* Launch mobile non-overlay */
       #ff-affiliate-store-buttons {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin: 18px 14px;
         align-items: stretch;
       }
 

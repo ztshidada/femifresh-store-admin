@@ -1922,4 +1922,118 @@ app.post("/api/aff-admin/affiliates/:id/delete", affiliateSystemAdminAuth, delet
 app.delete("/api/aff-admin/affiliates/:id", affiliateSystemAdminAuth, deleteAffiliateAccountHandler);
 // END SUPER_ADMIN_DELETE_AFFILIATE_V1
 
+
+
+// AFFILIATE_FORGOT_PASSWORD_V1
+function femiHashAffiliatePassword(password) {
+  try {
+    const bcryptjs = require("bcryptjs");
+    return bcryptjs.hashSync(String(password), 10);
+  } catch (e) {
+    return crypto.createHash("sha256").update(String(password)).digest("hex");
+  }
+}
+
+function femiSafeAffiliateEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+app.get("/reset-password", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "affiliate-reset-password.html"));
+});
+
+app.post("/api/affiliate/forgot-password", async (req, res) => {
+  try {
+    const email = femiSafeAffiliateEmail(req.body.email);
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required." });
+    }
+
+    const affiliates = read("affiliates", []);
+    const affiliate = affiliates.find(a => femiSafeAffiliateEmail(a.email) === email);
+
+    // Security: don't expose whether email exists
+    if (!affiliate) {
+      return res.json({ success: true, message: "If this email exists, a reset link has been sent." });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    affiliate.resetPasswordToken = token;
+    affiliate.resetPasswordExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    affiliate.updatedAt = new Date().toISOString();
+
+    write("affiliates", affiliates);
+
+    const resetUrl = (process.env.AFFILIATE_URL || "https://affiliates.femifresh.co.za").replace(/\/$/, "") + "/reset-password?token=" + encodeURIComponent(token);
+
+    try {
+      const emailer = require("./src/emailEvents");
+      await emailer.sendFemiEmail(
+        affiliate.email,
+        "Reset your FemiFresh affiliate password",
+        `
+          <div style="font-family:Arial,sans-serif;background:#fbf3fa;padding:24px;color:#2a162f">
+            <div style="max-width:640px;margin:auto;background:white;border-radius:22px;padding:28px;border:1px solid #ead8e8">
+              <h1 style="color:#6b1f64;margin-top:0">Reset Your Password</h1>
+              <p>Hi <strong>${affiliate.fullName || affiliate.firstName || "there"}</strong>,</p>
+              <p>Click the button below to reset your FemiFresh affiliate password.</p>
+              <p style="text-align:center;margin:28px 0">
+                <a href="${resetUrl}" style="background:#6b1f64;color:white;padding:14px 22px;border-radius:999px;text-decoration:none;font-weight:bold">Reset Password</a>
+              </p>
+              <p style="font-size:13px;color:#735f75">This link expires in 1 hour.</p>
+              <p style="font-size:13px;color:#735f75">If you did not request this, you can ignore this email.</p>
+            </div>
+          </div>
+        `,
+        { type: "affiliate_password_reset", affiliateId: affiliate.id, key: "reset:" + affiliate.id + ":" + token.slice(0, 8) }
+      );
+    } catch (e) {
+      console.error("Password reset email failed:", e.message);
+    }
+
+    res.json({ success: true, message: "If this email exists, a reset link has been sent." });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.post("/api/affiliate/reset-password", async (req, res) => {
+  try {
+    const token = String(req.body.token || "").trim();
+    const password = String(req.body.password || "");
+
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: "Token and password are required." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters." });
+    }
+
+    const affiliates = read("affiliates", []);
+    const affiliate = affiliates.find(a => String(a.resetPasswordToken || "") === token);
+
+    if (!affiliate) {
+      return res.status(400).json({ success: false, message: "Invalid or expired reset link." });
+    }
+
+    if (affiliate.resetPasswordExpiresAt && new Date(affiliate.resetPasswordExpiresAt).getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: "Reset link expired. Please request a new one." });
+    }
+
+    affiliate.passwordHash = femiHashAffiliatePassword(password);
+    affiliate.password = undefined;
+    delete affiliate.resetPasswordToken;
+    delete affiliate.resetPasswordExpiresAt;
+    affiliate.updatedAt = new Date().toISOString();
+
+    write("affiliates", affiliates);
+
+    res.json({ success: true, message: "Password updated. You can login now." });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+// END AFFILIATE_FORGOT_PASSWORD_V1
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

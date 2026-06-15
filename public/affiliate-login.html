@@ -3,7 +3,7 @@
 <head>
   <title>Affiliate Login</title>
   <link rel="stylesheet" href="/css/style.css">
-</head>
+  <link rel="stylesheet" href="/css/mobile-polish.css">\n</head>
 <body>
 <main class="affiliate-page">
   <section class="container auth-center">
@@ -42,6 +42,39 @@ async function loginAffiliate(e) {
   localStorage.setItem("ff_affiliate", JSON.stringify(data.affiliate));
   location.href = "/dashboard";
 }
+</script>
+
+<script>
+(function () {
+  const forms = document.querySelectorAll("form");
+  const form = forms[0];
+
+  const box = document.createElement("div");
+  box.className = "ff-forgot-password";
+  box.innerHTML = '<a href="#" id="ffForgotLink">Forgot password?</a>';
+
+  if (form) {
+    form.insertAdjacentElement("afterend", box);
+  } else {
+    document.body.appendChild(box);
+  }
+
+  document.getElementById("ffForgotLink").addEventListener("click", async function(e) {
+    e.preventDefault();
+
+    const email = prompt("Enter your affiliate email address:");
+    if (!email) return;
+
+    const res = await fetch("/api/affiliate/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    alert(data.message || "If this email exists, a reset link has been sent.");
+  });
+})();
 </script>
 </body>
 </html>
