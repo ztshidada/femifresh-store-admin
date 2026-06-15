@@ -7,6 +7,7 @@
 </head>
 <body>
 
+
 <header class="ff-site-header">
   <nav class="ff-nav">
     <a class="ff-brand" href="/">
@@ -17,7 +18,9 @@
     <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
 
     <div class="ff-navlinks" id="ffNavLinks">
+      <a href="/">Home</a>
       <a href="/products.html">Products</a>
+      <a href="/cart.html">Cart</a>
       <a href="/policies.html">Policy</a>
       <a href="/contact.html">Contact</a>
     </div>
@@ -93,6 +96,14 @@ async function loginAffiliate(e) {
     alert(data.message || "If this email exists, a reset link has been sent.");
   });
 })();
+</script>
+
+<script>
+  const ffMenuBtn = document.getElementById("ffMenuBtn");
+  const ffNavLinks = document.getElementById("ffNavLinks");
+  if (ffMenuBtn && ffNavLinks) {
+    ffMenuBtn.addEventListener("click", () => ffNavLinks.classList.toggle("open"));
+  }
 </script>
 </body>
 </html>

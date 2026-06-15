@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Distributors - FemiFresh</title><link rel="stylesheet" href="/css/style.css">  <link rel="stylesheet" href="/css/femifresh-unified.css">
 </head><body>
+
 <header class="ff-site-header">
   <nav class="ff-nav">
     <a class="ff-brand" href="/">
@@ -10,9 +11,19 @@
     <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
 
     <div class="ff-navlinks" id="ffNavLinks">
+      <a href="/">Home</a>
       <a href="/products.html">Products</a>
+      <a href="/cart.html">Cart</a>
       <a href="/policies.html">Policy</a>
       <a href="/contact.html">Contact</a>
     </div>
   </nav>
-</header><main class="wrap"><div class="card"><h1>FemiFresh is looking for distributors</h1><p>Join the FemiFresh distributor journey. The affiliate system will be built as the next separate zip and connected to store orders later.</p><a class="btn" href="/contact">Contact Us</a></div></main><script src="/js/store.js"></script><script src="/js/mobile-header-fix.js"></script>  </body></html>
+</header><main class="wrap"><div class="card"><h1>FemiFresh is looking for distributors</h1><p>Join the FemiFresh distributor journey. The affiliate system will be built as the next separate zip and connected to store orders later.</p><a class="btn" href="/contact">Contact Us</a></div></main><script src="/js/store.js"></script><script src="/js/mobile-header-fix.js"></script>  
+<script>
+  const ffMenuBtn = document.getElementById("ffMenuBtn");
+  const ffNavLinks = document.getElementById("ffNavLinks");
+  if (ffMenuBtn && ffNavLinks) {
+    ffMenuBtn.addEventListener("click", () => ffNavLinks.classList.toggle("open"));
+  }
+</script>
+</body></html>

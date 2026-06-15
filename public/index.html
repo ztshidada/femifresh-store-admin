@@ -616,12 +616,40 @@
         bottom:14px;
       }
     }
+  
+    /* FEATURED_IMAGE_FIX_V1 */
+    .product-img{
+      position:relative;
+      overflow:hidden;
+      background:#fff1fa;
+    }
+
+    .product-img img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .product-img.no-image{
+      background:
+        radial-gradient(circle at center,rgba(244,167,216,.46),transparent 44%),
+        linear-gradient(135deg,#5b1b55,#b247a4);
+      color:white;
+    }
+
+    .product-card .btn,
+    .product-card a.btn{
+      margin-top:16px;
+      width:100%;
+    }
   </style>
     <link rel="stylesheet" href="/css/femifresh-unified.css">
 </head>
 
 <body>
   
+
 <header class="ff-site-header">
   <nav class="ff-nav">
     <a class="ff-brand" href="/">
@@ -632,7 +660,9 @@
     <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
 
     <div class="ff-navlinks" id="ffNavLinks">
+      <a href="/">Home</a>
       <a href="/products.html">Products</a>
+      <a href="/cart.html">Cart</a>
       <a href="/policies.html">Policy</a>
       <a href="/contact.html">Contact</a>
     </div>
@@ -792,11 +822,33 @@
       document.getElementById("navLinks").classList.toggle("open");
     });
 
+    
+    function productImage(p){
+      return (
+        p.image ||
+        p.imageUrl ||
+        p.image_url ||
+        p.photo ||
+        p.photoUrl ||
+        p.thumbnail ||
+        p.mainImage ||
+        p.main_image ||
+        p.picture ||
+        ""
+      );
+    }
+
+    function productPrice(p){
+      const raw = p.price || p.amount || p.sellingPrice || p.salePrice || 0;
+      const num = Number(raw);
+      return Number.isFinite(num) && num > 0 ? "R" + num.toFixed(2) : "View product";
+    }
+
     async function loadFeaturedProducts(){
       const box = document.getElementById("featuredProducts");
 
       try{
-        const res = await fetch("/api/products");
+        const res = await fetch("/api/products", { cache: "no-store" });
         const data = await res.json();
         const products = Array.isArray(data) ? data : (data.products || data.data || []);
 
@@ -804,27 +856,36 @@
 
         box.innerHTML = products.slice(0,3).map(p => {
           const name = p.name || p.title || "FemiFresh Product";
-          const desc = p.description || "Premium feminine-care product for freshness and comfort.";
-          const price = Number(p.price || 0);
-          const img = p.image || p.imageUrl || p.photo || "";
+          const desc = p.description || p.shortDescription || "Premium feminine-care product for freshness and comfort.";
+          const img = productImage(p);
 
           return `
             <div class="product-card">
-              <div class="product-img" style="${img ? `background-image:url('${img}');background-size:cover;background-position:center;color:transparent;` : ""}">
-                ${name}
+              <div class="product-img ${img ? "" : "no-image"}">
+                ${img ? `<img src="${img}" alt="${name}" loading="lazy">` : name}
               </div>
               <div class="product-body">
                 <h3>${name}</h3>
                 <p>${desc}</p>
-                <div class="price">${price ? "R" + price.toFixed(2) : "View product"}</div>
+                <div class="price">${productPrice(p)}</div>
               </div>
             </div>
           `;
         }).join("");
-      }catch(e){}
+      }catch(e){
+        console.warn("Could not load featured products", e);
+      }
     }
 
     loadFeaturedProducts();
   </script>
+
+<script>
+  const ffMenuBtn = document.getElementById("ffMenuBtn");
+  const ffNavLinks = document.getElementById("ffNavLinks");
+  if (ffMenuBtn && ffNavLinks) {
+    ffMenuBtn.addEventListener("click", () => ffNavLinks.classList.toggle("open"));
+  }
+</script>
 </body>
 </html>
