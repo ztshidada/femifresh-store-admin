@@ -1,128 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact - FemiFresh</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/mobile-polish.css">
-<link rel="stylesheet" href="/css/glass-home-refresh.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contact FemiFresh</title>
+  <link rel="icon" href="/images/femifresh-logo.jpg">
+  <link rel="stylesheet" href="/css/femifresh-global.css">
 </head>
 <body>
-<header class="site-header">
-  <div class="container nav-wrap">
-    <a class="brand" href="/">
-      <img src="/images/femifresh-logo-source.jpg" alt="FemiFresh Logo">
-      <span>FemiFresh</span>
-    </a>
-
-    <nav class="main-nav" id="mainNav">
-      <a href="/">Home</a>
-      <a href="/products">Products</a>
-      <a href="/policies">Policies</a>
-      <a href="/contact">Contact</a>
-      <a class="cart-pill" href="/cart">Cart (<span id="cartCount">0</span>)</a>
-    </nav>
-
-    <button class="menu-btn" id="menuBtn" type="button">☰</button>
-  </div>
-</header>
-
-<main>
-  <section class="page-hero small-hero">
-    <div class="container">
-      <p class="eyebrow">WE ARE HERE TO HELP</p>
+  <main>
+    <section class="ff-page-hero">
       <h1>Contact FemiFresh</h1>
-      <p>Have a question about your order, delivery or FemiFresh products? Our support team is ready to assist you.</p>
-    </div>
-  </section>
+      <p>For orders, affiliate support, stock packages and general enquiries, please contact us by email.</p>
+    </section>
 
-  <section class="container contact-grid">
-    <div class="contact-card">
-      <div class="contact-icon">💬</div>
-      <h2>WhatsApp Us</h2>
-      <p>Quick assistance for orders, delivery updates and product questions.</p>
-      <a class="primary-btn full-btn" id="whatsappBtn" target="_blank" rel="noopener">Chat on WhatsApp</a>
-    </div>
-
-    <div class="contact-card">
-      <div class="contact-icon">📧</div>
-      <h2>Email</h2>
-      <p id="contactEmail">Loading...</p>
-    </div>
-
-    <div class="contact-card">
-      <div class="contact-icon">📞</div>
-      <h2>Phone</h2>
-      <p id="contactPhone">Loading...</p>
-    </div>
-
-    <div class="contact-card">
-      <div class="contact-icon">📍</div>
-      <h2>Location</h2>
-      <p id="contactAddress">Loading...</p>
-    </div>
-  </section>
-
-  <section class="container support-panel">
-    <div>
-      <p class="eyebrow">BUSINESS HOURS</p>
-      <h2 id="businessHours">Loading...</h2>
-      <p>Send your message anytime. We will respond as soon as possible during working hours.</p>
-    </div>
-
-    <div class="social-box">
-      <h3>Follow FemiFresh</h3>
-      <div class="social-links">
-        <a id="facebookLink" target="_blank" rel="noopener">Facebook</a>
-        <a id="instagramLink" target="_blank" rel="noopener">Instagram</a>
-        <a id="tiktokLink" target="_blank" rel="noopener">TikTok</a>
+    <section style="padding:30px 0 90px;">
+      <div class="card" style="max-width:720px;margin:auto;padding:34px;text-align:center;">
+        <img src="/images/femifresh-logo.jpg" alt="FemiFresh" style="width:110px;height:110px;object-fit:cover;border-radius:28px;margin-bottom:18px;">
+        <h2 style="margin:0 0 12px;">We’re here to help.</h2>
+        <p style="margin-bottom:24px;">Send us an email and our team will assist you as soon as possible.</p>
+        <a class="ff-email-only" href="mailto:femifresh02@gmail.com">femifresh02@gmail.com</a>
+        <div style="margin-top:30px;">
+          <a class="btn" href="/products.html">Shop Products</a>
+        </div>
       </div>
-    </div>
-  </section>
-</main>
-
-<script src="/js/store.js"></script>
-<script src="/js/mobile-header-fix.js"></script>
-<script>
-async function loadContactSettings() {
-  const res = await fetch("/api/settings/public");
-  const data = await res.json();
-  const s = data.settings || {};
-
-  const email = s.contact_email || "info@femifresh.co.za";
-  const phone = s.contact_phone || "+27 00 000 0000";
-  const whatsapp = s.contact_whatsapp || phone;
-  const address = s.contact_address || "South Africa";
-  const hours = s.business_hours || "Monday to Saturday, 08:00 - 17:00";
-
-  document.getElementById("contactEmail").innerHTML = '<a href="mailto:' + email + '">' + email + '</a>';
-  document.getElementById("contactPhone").innerHTML = '<a href="tel:' + phone.replace(/\s/g, "") + '">' + phone + '</a>';
-  document.getElementById("contactAddress").textContent = address;
-  document.getElementById("businessHours").textContent = hours;
-
-  const cleanWhatsApp = whatsapp.replace(/[^0-9]/g, "");
-  document.getElementById("whatsappBtn").href = "https://wa.me/" + cleanWhatsApp + "?text=" + encodeURIComponent("Hi FemiFresh, I need help.");
-
-  const links = [
-    ["facebookLink", s.facebook_url],
-    ["instagramLink", s.instagram_url],
-    ["tiktokLink", s.tiktok_url]
-  ];
-
-  links.forEach(([id, url]) => {
-    const el = document.getElementById(id);
-    if (url) {
-      el.href = url;
-      el.style.display = "inline-flex";
-    } else {
-      el.style.display = "none";
-    }
-  });
-}
-loadContactSettings();
-</script>
-  <script src="/js/store-affiliate-buttons.js"></script>
-<script src="/js/glass-home-refresh.js"></script>
+    </section>
+  </main>
 </body>
 </html>
