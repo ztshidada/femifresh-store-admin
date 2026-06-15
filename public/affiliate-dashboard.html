@@ -36,7 +36,7 @@
       </div>
       <div class="dash-actions">
         <button onclick="copyLink()">Copy Referral Link</button>
-        <button onclick="buyStock()">Buy R1350 Stock</button>
+        <button onclick="goBuyProducts()">Buy Products</button>
       </div>
     </section>
 
@@ -143,7 +143,7 @@ function copyLink() {
   showNotice("Referral link copied.");
 }
 
-async function buyStock() {
+async function goBuyProducts() {
   const res = await fetch("/api/affiliate/buy-stock-v2", {
     method: "POST",
     headers: { Authorization: "Bearer " + token() }
