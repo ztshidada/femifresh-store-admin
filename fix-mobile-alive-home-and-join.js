@@ -1,113 +1,78 @@
+const fs = require("fs");
+const path = require("path");
 
-/* Launch mobile polish */
-html {
-  scroll-behavior: smooth;
-}
+const publicDir = path.join(__dirname, "public");
+const polishCss = path.join(publicDir, "css", "mobile-polish.css");
+const buttonsJs = path.join(publicDir, "js", "store-affiliate-buttons.js");
 
-body {
-  -webkit-font-smoothing: antialiased;
-}
+/* 1) Remove visible literal \n from HTML files */
+function walk(dir, list = []) {
+  if (!fs.existsSync(dir)) return list;
 
-.ff-auth-body {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 20% 10%, rgba(255, 182, 225, .35), transparent 28%),
-    radial-gradient(circle at 80% 10%, rgba(107, 31, 100, .18), transparent 28%),
-    #fff4fb;
-}
+  for (const item of fs.readdirSync(dir)) {
+    const full = path.join(dir, item);
+    const stat = fs.statSync(full);
 
-.ff-auth-wrap {
-  width: min(1100px, calc(100% - 28px));
-  margin: 0 auto;
-  padding: 36px 0;
-  display: grid;
-  place-items: center;
-  min-height: 100vh;
-}
-
-.ff-auth-card {
-  width: min(430px, 100%);
-  background: rgba(255,255,255,.86);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(107,31,100,.12);
-  border-radius: 26px;
-  padding: 28px;
-  box-shadow: 0 24px 70px rgba(107,31,100,.14);
-}
-
-.ff-auth-logo {
-  width: 86px;
-  height: 86px;
-  object-fit: cover;
-  border-radius: 22px;
-  display: block;
-  margin-bottom: 16px;
-}
-
-.ff-auth-card input,
-.ff-auth-card button {
-  width: 100%;
-  min-height: 48px;
-  border-radius: 14px;
-  margin: 8px 0;
-}
-
-.ff-auth-card button {
-  border: 0;
-  background: #6b1f64;
-  color: #fff;
-  font-weight: 900;
-}
-
-.ff-muted,
-.ff-auth-msg {
-  color: #735f75;
-}
-
-.ff-forgot-password {
-  margin-top: 12px;
-  text-align: right;
-}
-
-.ff-forgot-password a {
-  color: #6b1f64;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-@media (max-width: 760px) {
-  body {
-    overflow-x: hidden;
+    if (stat.isDirectory()) walk(full, list);
+    if (stat.isFile() && full.endsWith(".html")) list.push(full);
   }
 
-  h1 {
-    line-height: 1.05;
-  }
+  return list;
+}
 
-  .hero,
-  .hero-section,
-  .affiliate-page,
-  .container {
-    width: 100%;
-  }
+for (const file of walk(publicDir)) {
+  let html = fs.readFileSync(file, "utf8");
 
-  input,
-  button,
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-
-  .ff-auth-wrap {
-    padding: 18px 14px;
-  }
-
-  .ff-auth-card {
-    padding: 22px;
-    border-radius: 22px;
+  if (html.includes("\\n")) {
+    html = html.replace(/\\n/g, "\n");
+    fs.writeFileSync(file, html);
+    console.log("Removed visible \\n from", path.relative(publicDir, file));
   }
 }
 
+/* 2) Replace affiliate buttons script so buttons appear in hero, not hidden */
+fs.writeFileSync(buttonsJs, `
+(function () {
+  if (document.getElementById("ff-affiliate-store-buttons")) return;
+
+  const isStorePage = !location.pathname.includes("/admin");
+  if (!isStorePage) return;
+
+  const wrap = document.createElement("div");
+  wrap.id = "ff-affiliate-store-buttons";
+  wrap.className = "ff-affiliate-hero-actions";
+  wrap.innerHTML = \`
+    <a class="ff-store-aff-btn primary" href="https://affiliates.femifresh.co.za">Become an Affiliate</a>
+    <a class="ff-store-aff-btn secondary" href="https://affiliates.femifresh.co.za/login">Affiliate Back Office</a>
+  \`;
+
+  const heroActions =
+    document.querySelector(".hero-actions") ||
+    document.querySelector(".hero .actions") ||
+    document.querySelector(".hero-buttons") ||
+    document.querySelector(".hero .buttons") ||
+    document.querySelector(".actions");
+
+  if (heroActions) {
+    heroActions.insertAdjacentElement("afterend", wrap);
+    return;
+  }
+
+  const hero =
+    document.querySelector(".hero") ||
+    document.querySelector("section") ||
+    document.querySelector("main") ||
+    document.body;
+
+  hero.appendChild(wrap);
+})();
+`);
+
+/* 3) Add alive/mobile CSS */
+let css = fs.existsSync(polishCss) ? fs.readFileSync(polishCss, "utf8") : "";
+
+if (!css.includes("FEMIFRESH_ALIVE_MOBILE_V2")) {
+  css += `
 
 /* FEMIFRESH_ALIVE_MOBILE_V2 */
 :root {
@@ -323,3 +288,43 @@ a.button:hover,
     z-index: 50;
   }
 }
+`;
+}
+
+fs.writeFileSync(polishCss, css);
+
+/* 4) Make sure pages load the CSS and buttons JS */
+const pages = [
+  "index.html",
+  "products.html",
+  "cart.html",
+  "checkout.html",
+  "contact.html",
+  "policies.html",
+  "distributors.html",
+  "join.html",
+  "affiliate-login.html",
+  "affiliate-dashboard.html"
+];
+
+for (const page of pages) {
+  const file = path.join(publicDir, page);
+  if (!fs.existsSync(file)) continue;
+
+  let html = fs.readFileSync(file, "utf8");
+
+  if (!html.includes("/css/mobile-polish.css")) {
+    html = html.replace("</head>", '<link rel="stylesheet" href="/css/mobile-polish.css">\n</head>');
+  }
+
+  if (
+    ["index.html", "products.html", "cart.html", "checkout.html", "contact.html"].includes(page) &&
+    !html.includes("/js/store-affiliate-buttons.js")
+  ) {
+    html = html.replace("</body>", '<script src="/js/store-affiliate-buttons.js"></script>\n</body>');
+  }
+
+  fs.writeFileSync(file, html);
+}
+
+console.log("Mobile alive polish installed.");
