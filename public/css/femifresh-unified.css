@@ -581,3 +581,99 @@ body.ff-admin-login{
     width:100%;
   }
 }
+
+
+/* FINAL_ADMIN_AND_PRODUCT_CLEANUP_V1 */
+
+/* Cart is now in the header */
+.floating-cart {
+  display: none !important;
+}
+
+/* Product image cards must never look empty */
+.product-img {
+  height: 230px !important;
+  min-height: 230px !important;
+  display: block !important;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(244,167,216,.30), transparent 38%),
+    linear-gradient(135deg,#5b1b55,#b247a4) !important;
+}
+
+.product-img img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.product-img::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(104,35,95,.08));
+  pointer-events: none;
+}
+
+/* Fix admin double sidebar layout */
+.ff-admin-layout {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.ff-admin-main {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.ff-admin-main > .ff-admin-sidebar,
+.ff-admin-main aside,
+.ff-admin-main nav.sidebar,
+.ff-admin-main .sidebar,
+.ff-admin-main .admin-sidebar {
+  display: none !important;
+}
+
+/* Admin tables cleaner */
+.ff-admin-main table {
+  background: rgba(255,255,255,.86);
+}
+
+.ff-admin-main .card,
+.ff-admin-main .panel,
+.ff-admin-main .table-card {
+  margin-bottom: 18px;
+}
+
+/* Remove any old purple block that was duplicated */
+.ff-admin-main > div:first-child:has(a[href*="dashboard"]):has(a[href*="orders"]):has(a[href*="products"]) {
+  display: none !important;
+}
+
+/* Desktop admin improvement */
+@media(min-width:901px){
+  .ff-admin-sidebar {
+    width: 280px;
+  }
+
+  .ff-admin-main {
+    padding: 42px;
+  }
+}
+
+/* Mobile admin improvement */
+@media(max-width:900px){
+  .ff-admin-sidebar {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  .ff-admin-menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

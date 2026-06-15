@@ -806,7 +806,7 @@
     </section>
   </main>
 
-  <a class="floating-cart" href="/cart.html">Cart</a>
+  
 
   <footer>
     <div class="wrap">
@@ -824,7 +824,7 @@
 
     
     function productImage(p){
-      return (
+      let img =
         p.image ||
         p.imageUrl ||
         p.image_url ||
@@ -834,8 +834,24 @@
         p.mainImage ||
         p.main_image ||
         p.picture ||
-        ""
-      );
+        p.productImage ||
+        p.product_image ||
+        "";
+
+      if (!img && Array.isArray(p.images) && p.images.length) {
+        const first = p.images[0];
+        img = typeof first === "string" ? first : (first.url || first.src || first.image || "");
+      }
+
+      if (!img && Array.isArray(p.gallery) && p.gallery.length) {
+        const first = p.gallery[0];
+        img = typeof first === "string" ? first : (first.url || first.src || first.image || "");
+      }
+
+      if (img && img.startsWith("uploads/")) img = "/" + img;
+      if (img && img.startsWith("public/")) img = img.replace("public", "");
+
+      return img || "/images/femifresh-logo.jpg";
     }
 
     function productPrice(p){
@@ -861,8 +877,8 @@
 
           return `
             <div class="product-card">
-              <div class="product-img ${img ? "" : "no-image"}">
-                ${img ? `<img src="${img}" alt="${name}" loading="lazy">` : name}
+              <div class="product-img">
+                <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='/images/femifresh-logo.jpg'">
               </div>
               <div class="product-body">
                 <h3>${name}</h3>
