@@ -52,11 +52,10 @@ app.use(async (req, res, next) => {
     if (global.ensureFemiDbReady) {
       await global.ensureFemiDbReady();
     }
-    next();
   } catch (e) {
-    console.error("Database ready check failed:", e.message);
-    res.status(500).json({ success: false, message: "Database not ready." });
+    console.error("Database ready check failed, continuing:", e.message);
   }
+  next();
 });
 
 app.use(express.json({ limit: '2mb' }));
