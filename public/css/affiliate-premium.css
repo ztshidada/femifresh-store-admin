@@ -1,0 +1,237 @@
+
+/* FEMIFRESH_AFFILIATE_PREMIUM_V1 */
+body{
+  background:
+    radial-gradient(circle at 8% 12%, rgba(244,167,216,.32), transparent 28%),
+    radial-gradient(circle at 92% 14%, rgba(104,35,95,.16), transparent 26%),
+    linear-gradient(180deg,#fff8fd 0%,#fff1fa 48%,#fffaf7 100%) !important;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:url("/images/femifresh-glass-butterfly.png") no-repeat 94% 16% / min(560px,58vw);
+  opacity:.07;
+  pointer-events:none;
+  z-index:-1;
+}
+
+.ff-affiliate-login-shell{
+  min-height:calc(100vh - 84px);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;
+  gap:44px;
+  width:min(1180px,calc(100% - 32px));
+  margin:auto;
+  padding:70px 0;
+}
+
+.ff-affiliate-login-copy h1{
+  margin:0 0 18px;
+  font-size:clamp(52px,7vw,92px);
+  line-height:.96;
+  letter-spacing:-.06em;
+  background:linear-gradient(120deg,#35112f,#68235f,#d55cbb);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.ff-affiliate-login-copy p{
+  font-size:20px;
+  max-width:560px;
+  color:#6f5e72;
+}
+
+.ff-affiliate-login-card{
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(104,35,95,.14);
+  border-radius:34px;
+  padding:38px;
+  box-shadow:0 28px 70px rgba(104,35,95,.13);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+.ff-affiliate-login-card img{
+  width:86px;
+  height:86px;
+  object-fit:cover;
+  border-radius:26px;
+  margin-bottom:16px;
+  box-shadow:0 18px 34px rgba(104,35,95,.16);
+}
+
+.ff-affiliate-login-card h1,
+.ff-affiliate-login-card h2{
+  margin:0 0 8px;
+  font-size:42px;
+  color:#35112f;
+}
+
+.ff-affiliate-login-card p{
+  margin:0 0 22px;
+}
+
+.ff-affiliate-login-card form{
+  display:grid;
+  gap:14px;
+}
+
+.ff-affiliate-login-card input{
+  width:100%;
+  min-height:52px;
+  border-radius:16px;
+  border:1px solid rgba(104,35,95,.18);
+  padding:14px 16px;
+  font-size:16px;
+}
+
+.ff-affiliate-login-card button{
+  width:100%;
+  min-height:54px;
+  border-radius:999px;
+  border:0;
+  background:linear-gradient(135deg,#68235f,#8c2e80,#f4a7d8);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.ff-affiliate-login-links{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  margin-top:18px;
+  flex-wrap:wrap;
+}
+
+.ff-affiliate-login-links a{
+  color:#68235f;
+  font-weight:850;
+  text-decoration:none;
+}
+
+/* Dashboard */
+.ff-affiliate-dashboard{
+  width:min(1180px,calc(100% - 32px));
+  margin:auto;
+  padding:70px 0 90px;
+}
+
+.ff-affiliate-dash-hero{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:28px;
+}
+
+.ff-affiliate-dash-hero h1{
+  margin:0;
+  font-size:clamp(44px,6vw,76px);
+  line-height:1;
+  letter-spacing:-.06em;
+  background:linear-gradient(120deg,#35112f,#68235f,#d55cbb);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.ff-affiliate-dash-hero p{
+  margin:0 0 10px;
+  color:#6f5e72;
+  font-weight:700;
+}
+
+.ff-affiliate-dash-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:24px;
+}
+
+.ff-affiliate-stat{
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(104,35,95,.14);
+  border-radius:26px;
+  padding:22px;
+  box-shadow:0 22px 52px rgba(104,35,95,.10);
+  backdrop-filter:blur(16px);
+}
+
+.ff-affiliate-stat span{
+  display:block;
+  color:#6f5e72;
+  font-weight:750;
+  margin-bottom:10px;
+}
+
+.ff-affiliate-stat strong{
+  display:block;
+  color:#68235f;
+  font-size:26px;
+  letter-spacing:.02em;
+}
+
+.ff-affiliate-panel{
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(104,35,95,.14);
+  border-radius:30px;
+  padding:28px;
+  box-shadow:0 22px 52px rgba(104,35,95,.10);
+  backdrop-filter:blur(16px);
+  margin-bottom:22px;
+}
+
+.ff-affiliate-panel h2{
+  margin-top:0;
+  color:#35112f;
+  font-size:clamp(32px,4vw,52px);
+}
+
+.ff-affiliate-panel input,
+.ff-affiliate-panel textarea{
+  background:#fff1fa !important;
+  border:1px solid rgba(104,35,95,.12) !important;
+  color:#68235f !important;
+  font-weight:800;
+}
+
+.ff-affiliate-panel button,
+.ff-affiliate-dashboard button,
+.ff-affiliate-dashboard .btn{
+  border-radius:999px !important;
+  background:linear-gradient(135deg,#68235f,#8c2e80,#f4a7d8) !important;
+  color:white !important;
+  font-weight:900 !important;
+}
+
+@media(max-width:900px){
+  .ff-affiliate-login-shell{
+    grid-template-columns:1fr;
+    padding:44px 0;
+  }
+
+  .ff-affiliate-login-copy{
+    text-align:center;
+  }
+
+  .ff-affiliate-login-card{
+    padding:26px;
+  }
+
+  .ff-affiliate-login-links{
+    display:grid;
+  }
+
+  .ff-affiliate-dash-hero{
+    display:block;
+  }
+
+  .ff-affiliate-dash-grid{
+    grid-template-columns:1fr;
+  }
+}
