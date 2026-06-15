@@ -3,11 +3,26 @@
 <head>
   <title>Join FemiFresh</title>
   <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/mobile-polish.css">
-<link rel="stylesheet" href="/css/glass-home-refresh.css">
-  <link rel="stylesheet" href="/css/femifresh-global.css">
+    <link rel="stylesheet" href="/css/femifresh-unified.css">
 </head>
 <body>
+
+<header class="ff-site-header">
+  <nav class="ff-nav">
+    <a class="ff-brand" href="/">
+      <img src="/images/femifresh-logo.jpg" alt="FemiFresh logo">
+      <span>FemiFresh</span>
+    </a>
+
+    <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
+
+    <div class="ff-navlinks" id="ffNavLinks">
+      <a href="/products.html">Products</a>
+      <a href="/policies.html">Policy</a>
+      <a href="/contact.html">Contact</a>
+    </div>
+  </nav>
+</header>
 <main class="affiliate-page">
   <section class="container affiliate-wrap">
     <div class="affiliate-copy">
@@ -62,6 +77,5 @@ async function registerAffiliate(e) {
   location.href = data.checkoutUrl;
 }
 </script>
-<script src="/js/glass-home-refresh.js"></script>
 </body>
 </html>

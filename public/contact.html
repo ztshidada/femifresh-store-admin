@@ -5,26 +5,53 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Contact FemiFresh</title>
   <link rel="icon" href="/images/femifresh-logo.jpg">
-  <link rel="stylesheet" href="/css/femifresh-global.css">
+  <link rel="stylesheet" href="/css/femifresh-unified.css">
 </head>
 <body>
-  <main>
-    <section class="ff-page-hero">
-      <h1>Contact FemiFresh</h1>
-      <p>For orders, affiliate support, stock packages and general enquiries, please contact us by email.</p>
-    </section>
 
-    <section style="padding:30px 0 90px;">
-      <div class="card" style="max-width:720px;margin:auto;padding:34px;text-align:center;">
-        <img src="/images/femifresh-logo.jpg" alt="FemiFresh" style="width:110px;height:110px;object-fit:cover;border-radius:28px;margin-bottom:18px;">
-        <h2 style="margin:0 0 12px;">We’re here to help.</h2>
-        <p style="margin-bottom:24px;">Send us an email and our team will assist you as soon as possible.</p>
-        <a class="ff-email-only" href="mailto:femifresh02@gmail.com">femifresh02@gmail.com</a>
-        <div style="margin-top:30px;">
-          <a class="btn" href="/products.html">Shop Products</a>
-        </div>
+<header class="ff-site-header">
+  <nav class="ff-nav">
+    <a class="ff-brand" href="/">
+      <img src="/images/femifresh-logo.jpg" alt="FemiFresh logo">
+      <span>FemiFresh</span>
+    </a>
+
+    <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
+
+    <div class="ff-navlinks" id="ffNavLinks">
+      <a href="/products.html">Products</a>
+      <a href="/policies.html">Policy</a>
+      <a href="/contact.html">Contact</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="ff-page-hero">
+    <h1>Contact FemiFresh</h1>
+    <p>For orders, affiliate support, stock packages and general enquiries, please contact us by email.</p>
+  </section>
+
+  <section style="padding:26px 0 90px;">
+    <div class="ff-card" style="max-width:760px;margin:auto;padding:36px;text-align:center;">
+      <img src="/images/femifresh-logo.jpg" alt="FemiFresh" style="width:110px;height:110px;object-fit:cover;border-radius:28px;margin-bottom:18px;">
+      <h2 style="margin:0 0 12px;">We’re here to help.</h2>
+      <p style="margin-bottom:24px;">Send us an email and our team will assist you as soon as possible.</p>
+      <a class="ff-secondary btn" href="mailto:femifresh02@gmail.com">femifresh02@gmail.com</a>
+      <div style="margin-top:28px;">
+        <a class="btn" href="/products.html">Shop Products</a>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+</main>
+
+
+<script>
+  const ffMenuBtn = document.getElementById("ffMenuBtn");
+  const ffNavLinks = document.getElementById("ffNavLinks");
+  if (ffMenuBtn && ffNavLinks) {
+    ffMenuBtn.addEventListener("click", () => ffNavLinks.classList.toggle("open"));
+  }
+</script>
 </body>
 </html>
