@@ -1808,4 +1808,12 @@ async function emailAffiliateStockCheckoutStarted(affiliate) {
 }
 // END AFFILIATE_EMAIL_SYSTEM_V1
 
+
+// Start launch email automation
+try {
+  require("./src/emailEvents").startFemiEmailEventScanner();
+} catch (e) {
+  console.error("Could not start email event scanner:", e.message);
+}
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
