@@ -45,6 +45,20 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
+
+// Wait for Supabase-backed storage before handling requests
+app.use(async (req, res, next) => {
+  try {
+    if (global.ensureFemiDbReady) {
+      await global.ensureFemiDbReady();
+    }
+    next();
+  } catch (e) {
+    console.error("Database ready check failed:", e.message);
+    res.status(500).json({ success: false, message: "Database not ready." });
+  }
+});
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
