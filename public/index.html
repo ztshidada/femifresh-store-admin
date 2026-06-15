@@ -643,6 +643,20 @@
       margin-top:16px;
       width:100%;
     }
+  
+    /* FEATURED_IMAGE_FORCE_FIX_V2 */
+    .product-img{
+      height:230px !important;
+      min-height:230px !important;
+      display:block !important;
+      background:#fff1fa !important;
+    }
+    .product-img img{
+      width:100% !important;
+      height:100% !important;
+      object-fit:cover !important;
+      display:block !important;
+    }
   </style>
     <link rel="stylesheet" href="/css/femifresh-unified.css">
 </head>
@@ -883,11 +897,26 @@
       return Number.isFinite(num) && num > 0 ? "R" + num.toFixed(2) : "View product";
     }
 
+    
+    function getProductImage(p){
+      let img = p.image || p.imageUrl || p.image_url || p.photo || p.photoUrl || p.thumbnail || p.mainImage || p.main_image || p.picture || "";
+
+      if (!img && Array.isArray(p.images) && p.images.length) {
+        const first = p.images[0];
+        img = typeof first === "string" ? first : (first.url || first.src || first.image || "");
+      }
+
+      if (img && img.startsWith("uploads/")) img = "/" + img;
+      if (img && img.startsWith("public/")) img = img.replace("public", "");
+
+      return img || "/images/femifresh-logo.jpg";
+    }
+
     async function loadFeaturedProducts(){
       const box = document.getElementById("featuredProducts");
 
       try{
-        const res = await fetch("/api/products", { cache: "no-store" });
+        const res = await fetch("/api/products", { cache:"no-store" });
         const data = await res.json();
         const products = Array.isArray(data) ? data : (data.products || data.data || []);
 
@@ -896,7 +925,8 @@
         box.innerHTML = products.slice(0,3).map(p => {
           const name = p.name || p.title || "FemiFresh Product";
           const desc = p.description || p.shortDescription || "Premium feminine-care product for freshness and comfort.";
-          const img = productImage(p);
+          const price = Number(p.price || p.amount || p.sellingPrice || 0);
+          const img = getProductImage(p);
 
           return `
             <div class="product-card">
@@ -906,13 +936,13 @@
               <div class="product-body">
                 <h3>${name}</h3>
                 <p>${desc}</p>
-                <div class="price">${productPrice(p)}</div>
+                <div class="price">${price ? "R" + price.toFixed(2) : "View product"}</div>
               </div>
             </div>
           `;
         }).join("");
       }catch(e){
-        console.warn("Could not load featured products", e);
+        console.warn("Featured products failed", e);
       }
     }
 

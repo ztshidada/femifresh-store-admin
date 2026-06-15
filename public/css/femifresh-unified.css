@@ -677,3 +677,65 @@ body.ff-admin-login{
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* STORE_HEADER_RIGHT_CART_REPAIR_V1 */
+.ff-site-header,
+.topbar,
+header.topbar{
+  width:100% !important;
+}
+
+.ff-nav,
+.nav{
+  width:100% !important;
+  max-width:none !important;
+  padding-left:9vw !important;
+  padding-right:9vw !important;
+  margin:0 !important;
+}
+
+.ff-navlinks,
+.navlinks{
+  margin-left:auto !important;
+  justify-content:flex-end !important;
+}
+
+.ff-navlinks a[href="/cart.html"]{
+  position:relative;
+  font-size:0 !important;
+  width:48px;
+  height:48px;
+  padding:0 !important;
+  display:inline-grid !important;
+  place-items:center;
+  background:rgba(255,255,255,.75);
+  border:1px solid rgba(104,35,95,.12);
+  box-shadow:0 10px 24px rgba(104,35,95,.08);
+}
+
+.ff-navlinks a[href="/cart.html"]::after{
+  content:"🛒" !important;
+  font-size:20px !important;
+  line-height:1;
+}
+
+@media(max-width:900px){
+  .ff-nav,
+  .nav{
+    padding-left:18px !important;
+    padding-right:18px !important;
+  }
+
+  .ff-navlinks a[href="/cart.html"]{
+    width:100% !important;
+    font-size:15px !important;
+    display:flex !important;
+    justify-content:center;
+  }
+
+  .ff-navlinks a[href="/cart.html"]::before{
+    content:"Cart ";
+    font-size:15px;
+  }
+}

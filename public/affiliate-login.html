@@ -4,29 +4,13 @@
   <title>Affiliate Login</title>
   <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/femifresh-unified.css">
-  <link rel="stylesheet" href="/css/affiliate-premium.css">\n</head>
+  <link rel="stylesheet" href="/css/affiliate-premium.css">
+</head>
 <body>
 
 
 
-<header class="ff-site-header">
-  <nav class="ff-nav">
-    <a class="ff-brand" href="/">
-      <img src="/images/femifresh-logo.jpg" alt="FemiFresh logo">
-      <span>FemiFresh</span>
-    </a>
 
-    <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
-
-    <div class="ff-navlinks" id="ffNavLinks">
-      <a href="/">Home</a>
-      <a href="/products.html">Products</a>
-      <a href="/cart.html">Cart</a>
-      <a href="/policies.html">Policy</a>
-      <a href="/contact.html">Contact</a>
-    </div>
-  </nav>
-</header>
 <main class="affiliate-page">
   <section class="container auth-center">
     <form class="affiliate-card small-auth" onsubmit="loginAffiliate(event)">
@@ -100,13 +84,8 @@ async function loginAffiliate(e) {
 </script>
 
 
-  <script src="/js/affiliate-premium.js"></script>\n
-<script>
-  const ffMenuBtn = document.getElementById("ffMenuBtn");
-  const ffNavLinks = document.getElementById("ffNavLinks");
-  if (ffMenuBtn && ffNavLinks) {
-    ffMenuBtn.addEventListener("click", () => ffNavLinks.classList.toggle("open"));
-  }
-</script>
+  <script src="/js/affiliate-premium.js"></script>
+
+
 </body>
 </html>
