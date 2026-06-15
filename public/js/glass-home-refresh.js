@@ -246,8 +246,13 @@ function runHome() {
 
     styleHero(hero);
     ensureHomeButtons(hero);
-    ensureGlassShowcase(hero);
+    
+    document.querySelectorAll(".ff-glass-showcase").forEach(el => el.remove());
+
+    
     removeOldHeroVisual();
+    document.querySelectorAll(".ff-glass-showcase").forEach(el => el.remove());
+
     hideBigOverflowingPromo();
     cleanupFeaturedProducts();
     addSoftGlassToCards();
