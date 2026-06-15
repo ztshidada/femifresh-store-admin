@@ -24,8 +24,85 @@ function emailOfCustomer(o) {
   return o.email || o.customerEmail || o.customer?.email || o.billing?.email || "";
 }
 
+function getOrderItems(o) {
+  const possible = [
+    o.items,
+    o.cart,
+    o.cartItems,
+    o.products,
+    o.orderItems,
+    o.lineItems
+  ];
+
+  for (const value of possible) {
+    if (Array.isArray(value)) return value;
+  }
+
+  return [];
+}
+
+function itemName(item) {
+  return item.name || item.title || item.productName || item.product?.name || item.product?.title || "Product";
+}
+
+function itemQty(item) {
+  return Number(item.quantity || item.qty || item.units || 1);
+}
+
+function itemPrice(item) {
+  return Number(item.price || item.unitPrice || item.amount || item.product?.price || 0);
+}
+
+function itemTotal(item) {
+  return Number(item.total || item.subtotal || item.lineTotal || (itemQty(item) * itemPrice(item)) || 0);
+}
+
+function orderItemsHtml(o) {
+  const items = getOrderItems(o);
+
+  if (!items.length) {
+    return `
+      <p style="margin:14px 0;color:#7a6a7d;">
+        Product details were not available on this email record. Please check the admin order dashboard for the full order.
+      </p>
+    `;
+  }
+
+  const rows = items.map(item => `
+    <tr>
+      <td style="padding:12px;border-bottom:1px solid #ead8e8;font-weight:700;">${itemName(item)}</td>
+      <td style="padding:12px;border-bottom:1px solid #ead8e8;text-align:center;">${itemQty(item)}</td>
+      <td style="padding:12px;border-bottom:1px solid #ead8e8;text-align:right;">${money(itemPrice(item))}</td>
+      <td style="padding:12px;border-bottom:1px solid #ead8e8;text-align:right;font-weight:800;">${money(itemTotal(item))}</td>
+    </tr>
+  `).join("");
+
+  return `
+    <h3 style="margin:22px 0 10px;color:#6b1f64;">Order items</h3>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #ead8e8;border-radius:14px;overflow:hidden;border-collapse:separate;">
+      <thead>
+        <tr style="background:#fbf5fa;">
+          <th align="left" style="padding:12px;color:#6b1f64;">Product</th>
+          <th align="center" style="padding:12px;color:#6b1f64;">Qty</th>
+          <th align="right" style="padding:12px;color:#6b1f64;">Price</th>
+          <th align="right" style="padding:12px;color:#6b1f64;">Total</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
 function orderId(o) {
-  return String(o.id || o.orderId || o.orderNumber || o.reference || o.createdAt || Date.now());
+  return String(
+    o.orderNumber ||
+    o.orderNo ||
+    o.reference ||
+    o.orderId ||
+    o.id ||
+    o.createdAt ||
+    Date.now()
+  );
 }
 
 function isActive(a, month = currentMonth()) {
@@ -238,9 +315,15 @@ async function scanFemiEmailEvents() {
           "FemiFresh order received",
           shell("Order Received", `
             <p>Thank you for your FemiFresh order.</p>
-            <p><strong>Order:</strong> ${id}</p>
-            <p><strong>Total:</strong> ${money(total)}</p>
-            <p>We will notify you once your order is processed.</p>
+
+            <div style="background:#fbf5fa;border:1px solid #ead8e8;border-radius:16px;padding:16px;margin:18px 0;">
+              <p style="margin:0 0 8px;"><strong>Order number:</strong> ${id}</p>
+              <p style="margin:0;"><strong>Total:</strong> ${money(total)}</p>
+            </div>
+
+            ${orderItemsHtml(o)}
+
+            <p style="margin-top:20px;">We will notify you once your order is processed.</p>
           `),
           { type: "order_received", orderId: id, key: `order:${id}` }
         );
@@ -251,9 +334,14 @@ async function scanFemiEmailEvents() {
             "New FemiFresh order received",
             shell("New Order", `
               <p>A new order has been placed.</p>
-              <p><strong>Order:</strong> ${id}</p>
-              <p><strong>Customer:</strong> ${to}</p>
-              <p><strong>Total:</strong> ${money(total)}</p>
+
+              <div style="background:#fbf5fa;border:1px solid #ead8e8;border-radius:16px;padding:16px;margin:18px 0;">
+                <p style="margin:0 0 8px;"><strong>Order number:</strong> ${id}</p>
+                <p style="margin:0 0 8px;"><strong>Customer:</strong> ${to}</p>
+                <p style="margin:0;"><strong>Total:</strong> ${money(total)}</p>
+              </div>
+
+              ${orderItemsHtml(o)}
             `),
             { type: "admin_order_received", orderId: id, key: `admin-order:${id}` }
           );
