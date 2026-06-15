@@ -100,9 +100,7 @@
         </div>
       `;
 
-      const buttons = hero.querySelector(".ff-affiliate-hero-actions");
-      if (buttons) buttons.insertAdjacentElement("afterend", box);
-      else hero.appendChild(box);
+      hero.appendChild(box);
     }
   }
 
