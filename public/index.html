@@ -900,8 +900,8 @@
 
           return `
             <div class="product-card">
-              <div class="product-img ${img ? "" : "no-image"}">
-                ${img ? `<img src="${img}" alt="${name}" loading="lazy">` : name}
+              <div class="product-img">
+                <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='/images/femifresh-logo.jpg'">
               </div>
               <div class="product-body">
                 <h3>${name}</h3>
