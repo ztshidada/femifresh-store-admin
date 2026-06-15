@@ -43,14 +43,49 @@ function normalizeState(state) {
 }
 
 function shell(title, body) {
+  const baseUrl = (process.env.APP_URL || "https://www.femifresh.co.za").replace(/\/$/, "");
+  const logoUrl = process.env.EMAIL_LOGO_URL || `${baseUrl}/images/femifresh-logo.jpg`;
+
   return `
-  <div style="font-family:Arial,sans-serif;background:#fbf3fa;padding:24px;color:#2a162f">
-    <div style="max-width:640px;margin:auto;background:#fff;border-radius:22px;padding:28px;border:1px solid #ead8e8">
-      <h1 style="color:#6b1f64;margin-top:0">${title}</h1>
-      <div style="font-size:16px;line-height:1.6">${body}</div>
-      <hr style="border:0;border-top:1px solid #ead8e8;margin:24px 0">
-      <p style="font-size:13px;color:#735f75">FemiFresh — Confidence in every wash.</p>
-    </div>
+  <div style="margin:0;padding:0;background:#f8eef7;font-family:Arial,Helvetica,sans-serif;color:#26132b;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8eef7;margin:0;padding:30px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border-radius:26px;overflow:hidden;border:1px solid #ead8e8;box-shadow:0 14px 40px rgba(106,31,100,0.12);">
+            
+            <tr>
+              <td align="center" style="background:#572452;padding:34px 24px 28px;">
+                <img src="${logoUrl}" alt="FemiFresh" style="display:block;max-width:260px;width:80%;height:auto;margin:0 auto;border-radius:14px;">
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="background:#7a2a73;padding:26px 28px;">
+                <h1 style="margin:0;color:#ffffff;font-size:30px;line-height:1.2;font-weight:800;letter-spacing:0.3px;">${title}</h1>
+                <p style="margin:10px 0 0;color:#f6d7ef;font-size:15px;">Confidence in every wash.</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:34px 32px;font-size:16px;line-height:1.7;color:#26132b;">
+                ${body}
+              </td>
+            </tr>
+
+            <tr>
+              <td style="background:#fbf5fa;padding:22px 32px;text-align:center;border-top:1px solid #ead8e8;">
+                <p style="margin:0 0 6px;color:#6b1f64;font-weight:800;font-size:15px;">FemiFresh</p>
+                <p style="margin:0;color:#7a6a7d;font-size:13px;">Confidence in every wash.</p>
+                <p style="margin:12px 0 0;color:#7a6a7d;font-size:12px;">
+                  <a href="${baseUrl}" style="color:#6b1f64;text-decoration:none;font-weight:700;">${baseUrl}</a>
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
   </div>`;
 }
 
