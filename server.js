@@ -14,6 +14,28 @@ require('./src/seed');
 const app = express();
 
 // AFFILIATE_FORCE_TOP_ROUTER_V2
+
+
+// MANUAL_AFFILIATE_JOINING_FEE_FORCE_V1
+// While Yoco reviews the affiliate subdomain, do not redirect affiliate registrations to online payment.
+// Frontend should show these manual instructions after registration.
+function femiManualJoiningFeeResponse(payload = {}) {
+  return {
+    ...payload,
+    paymentRequired: true,
+    paymentMode: "manual",
+    joiningFeeAmount: 100,
+    manualPayment: {
+      amount: 100,
+      email: "femifresh02@gmail.com",
+      instruction: "Pay the once-off R100 joining fee manually and email proof of payment to femifresh02@gmail.com. Use the registered affiliate email as reference."
+    },
+    checkoutUrl: null,
+    paymentUrl: null,
+    yocoUrl: null
+  };
+}
+
 app.use((req, res, next) => {
   const host = String(req.get("host") || "").toLowerCase();
 
@@ -587,7 +609,7 @@ async function createJoiningFeeCheckout(affiliate, req) {
   return {
     success: true,
     payment: "yoco",
-    checkoutUrl: checkoutUrl || baseUrl + "/success?code=" + encodeURIComponent(affiliate.referralCode),
+    checkoutUrl: null || baseUrl + "/success?code=" + encodeURIComponent(affiliate.referralCode),
     data
   };
 }
@@ -666,9 +688,7 @@ app.post("/api/affiliate/register", async (req, res) => {
 
     const checkout = await createJoiningFeeCheckout(affiliate, req);
 
-    res.json({
-      success: true,
-      affiliate: publicAffiliate(affiliate),
+    res.json(femiManualJoiningFeeResponse({ success: true, affiliate: publicAffiliate(affiliate),
       token: affiliate.token,
       payment: checkout.payment,
       checkoutUrl: checkout.checkoutUrl
@@ -704,7 +724,7 @@ app.post("/api/affiliate/login", (req, res) => {
     console.log('Email handled by launch scanner: registered');
   }
 
-  res.json({ success: true, affiliate: publicAffiliate(affiliate), token: affiliate.token });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: publicAffiliate(affiliate), token: affiliate.token });
 });
 
 app.get("/api/affiliate/me", (req, res) => {
@@ -720,9 +740,7 @@ app.get("/api/affiliate/me", (req, res) => {
   const activeDirects = directs.filter(a => Array.isArray(a.activeMonths) && a.activeMonths.includes(month));
   const selfActive = Array.isArray(affiliate.activeMonths) && affiliate.activeMonths.includes(month);
 
-  res.json({
-    success: true,
-    affiliate: publicAffiliate(affiliate),
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: publicAffiliate(affiliate),
     stats: {
       month,
       selfActive,
@@ -911,7 +929,7 @@ app.post("/api/admin/affiliates/:id/mark-joining-paid", affiliateAdminAuthV2, (r
 
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
 });
 
 app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminAuthV2, (req, res) => {
@@ -934,7 +952,7 @@ app.post("/api/admin/affiliates/:id/toggle-active", affiliateAdminAuthV2, (req, 
   affiliate.updatedAt = new Date().toISOString();
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: safeAffiliateAdmin(affiliate) });
 });
 // END AFFILIATE_ADMIN_API_V1
 
@@ -1186,9 +1204,7 @@ app.get("/api/aff-admin/affiliates/:id", affiliateSystemAdminAuth, (req, res) =>
     stats: calculateAffiliateStats(a, affiliates, month)
   }));
 
-  res.json({
-    success: true,
-    affiliate: affiliateSafe(affiliate),
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafe(affiliate),
     sponsor: affiliateSafe(sponsor),
     stats: calculateAffiliateStats(affiliate, affiliates, month),
     directs,
@@ -1251,7 +1267,7 @@ app.post("/api/aff-admin/affiliates/:id/mark-joining-paid", affiliateSystemAdmin
 
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafe(affiliate) });
 });
 
 app.post("/api/aff-admin/affiliates/:id/mark-active", affiliateSystemAdminAuth, (req, res) => {
@@ -1271,7 +1287,7 @@ app.post("/api/aff-admin/affiliates/:id/mark-active", affiliateSystemAdminAuth, 
   affiliate.updatedAt = new Date().toISOString();
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafe(affiliate) });
 });
 
 app.post("/api/aff-admin/affiliates/:id/mark-inactive", affiliateSystemAdminAuth, (req, res) => {
@@ -1287,7 +1303,7 @@ app.post("/api/aff-admin/affiliates/:id/mark-inactive", affiliateSystemAdminAuth
   affiliate.updatedAt = new Date().toISOString();
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafe(affiliate) });
 });
 
 app.post("/api/aff-admin/affiliates/:id/block-payout", affiliateSystemAdminAuth, (req, res) => {
@@ -1304,7 +1320,7 @@ app.post("/api/aff-admin/affiliates/:id/block-payout", affiliateSystemAdminAuth,
 
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafe(affiliate) });
 });
 
 app.post("/api/aff-admin/affiliates/:id/unblock-payout", affiliateSystemAdminAuth, (req, res) => {
@@ -1321,7 +1337,7 @@ app.post("/api/aff-admin/affiliates/:id/unblock-payout", affiliateSystemAdminAut
 
   write("affiliates", affiliates);
 
-  res.json({ success: true, affiliate: affiliateSafe(affiliate) });
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafe(affiliate) });
 });
 
 app.post("/api/aff-admin/recalculate", affiliateSystemAdminAuth, (req, res) => {
@@ -1547,9 +1563,7 @@ app.get("/api/affiliate/dashboard-v2", (req, res) => {
 
   const baseUrl = (process.env.AFFILIATE_URL || process.env.APP_URL || req.protocol + "://" + req.get("host")).replace(/\/$/, "");
 
-  res.json({
-    success: true,
-    affiliate: affiliateSafeMemberV2(affiliate),
+  res.json(femiManualJoiningFeeResponse({ success: true, affiliate: affiliateSafeMemberV2(affiliate),
     sponsor: affiliateSafeMemberV2(sponsor),
     stats: calculateAffiliateMemberStatsV2(affiliate, affiliates, month),
     directs,
@@ -1618,7 +1632,7 @@ app.post("/api/affiliate/buy-stock-v2", async (req, res) => {
     res.json({
       success: true,
       payment: "yoco",
-      checkoutUrl: checkoutUrl || baseUrl + "/dashboard?stock=created"
+      checkoutUrl: null || baseUrl + "/dashboard?stock=created"
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
@@ -1900,9 +1914,7 @@ function deleteAffiliateAccountHandler(req, res) {
     write("affiliates", affiliates);
     write("deletedAffiliates", deletedLogs.slice(0, 500));
 
-    return res.json({
-      success: true,
-      message: "Affiliate account deleted.",
+    return res.json(femiManualJoiningFeeResponse({ success: true, message: "Affiliate account deleted.",
       deletedAffiliate: {
         id: deleted.id,
         email: deleted.email,
