@@ -20,7 +20,29 @@
         <p class="muted">FemiFresh Affiliate</p>
         <h1 id="welcomeName">Welcome</h1>
       </div>
-      
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div id="noticeBox" class="affiliate-notice" style="display:none;"></div>
+
+    <div class="dash-grid-v2">
+      <div class="dash-card"><span>Referral Code</span><strong id="referralCode">---</strong></div>
+      <div class="dash-card"><span>Account Status</span><strong id="accountStatus">---</strong></div>
+      <div class="dash-card"><span>Active This Month</span><strong id="selfActive">---</strong></div>
+      <div class="dash-card"><span>Active Directs</span><strong id="activeDirects">0 / 0</strong></div>
+      <div class="dash-card"><span>Referral Bonus Counted</span><strong id="refBonus">R0</strong></div>
+      <div class="dash-card"><span>Target Bonus Progress</span><strong id="targetProgress">0 / 10</strong></div>
+      <div class="dash-card"><span>Total Counted</span><strong id="totalCounted">R0</strong></div>
+      <div class="dash-card"><span>Total Payable</span><strong id="totalPayable">R0</strong></div>
+    </div>
+
+    <section class="affiliate-panel">
+      <div>
+        <h2>Your referral link</h2>
+        <p id="referralLink" class="copy-link-text">---</p>
+      </div>
+      <div class="dash-actions">
+        <button onclick="copyLink()">Copy Referral Link</button>
         <button onclick="goBuyProducts()">Buy Products</button>
       </div>
     </section>
@@ -159,5 +181,5 @@ loadDash();
 </script>
 
 
-    <script src="/js/manual-affiliate-payment.js"></script>\n</body>
+  </body>
 </html>
