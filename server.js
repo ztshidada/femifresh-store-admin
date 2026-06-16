@@ -2102,4 +2102,176 @@ app.post("/api/admin/payment-settings", femiSimpleAdminCookieCheck, (req, res) =
   });
 });
 
+
+
+// FEMIFRESH_MANUAL_JOINING_FLOW_V1
+function femiManualJoiningDefaults() {
+  return {
+    joiningFeeAmount: 100,
+    yocoAffiliateJoiningFeeEnabled: false,
+    manualAffiliateJoiningFeeEnabled: true,
+    manualButtonEnabled: true,
+    popEmail: "femifresh02@gmail.com",
+    paymentTitle: "Manual joining fee payment",
+    paymentInstructions: "Pay the once-off R100 joining fee manually and email proof of payment to femifresh02@gmail.com. Use your registered affiliate email as reference.",
+    bankName: "",
+    accountHolder: "",
+    accountNumber: "",
+    branchCode: "",
+    referenceInstruction: "Use your registered affiliate email as reference."
+  };
+}
+
+function femiGetManualJoiningSettings() {
+  const settings = read("settings", {});
+  return {
+    ...femiManualJoiningDefaults(),
+    ...(settings.manualJoiningPayment || {})
+  };
+}
+
+function femiSaveManualJoiningSettings(nextSettings) {
+  const settings = read("settings", {});
+  settings.manualJoiningPayment = {
+    ...femiManualJoiningDefaults(),
+    ...nextSettings
+  };
+  write("settings", settings);
+  return settings.manualJoiningPayment;
+}
+
+function femiAdminCookieRequired(req, res, next) {
+  const cookieHeader = req.headers.cookie || "";
+  if (!cookieHeader.includes("ff_admin_token=")) {
+    return res.status(401).json({ success: false, message: "Admin login required." });
+  }
+  next();
+}
+
+function femiAffiliateIsPaid(a) {
+  return !!(
+    a.joiningFeePaid ||
+    a.manualJoiningFeePaid ||
+    a.joiningFeeStatus === "paid" ||
+    a.paymentStatus === "paid"
+  );
+}
+
+app.get("/api/manual-joining-settings", (req, res) => {
+  res.json({
+    success: true,
+    settings: femiGetManualJoiningSettings()
+  });
+});
+
+app.get("/api/admin/manual-joining-settings", femiAdminCookieRequired, (req, res) => {
+  res.json({
+    success: true,
+    settings: femiGetManualJoiningSettings()
+  });
+});
+
+app.post("/api/admin/manual-joining-settings", femiAdminCookieRequired, (req, res) => {
+  const body = req.body || {};
+  const saved = femiSaveManualJoiningSettings({
+    joiningFeeAmount: Number(body.joiningFeeAmount || 100),
+    yocoAffiliateJoiningFeeEnabled: !!body.yocoAffiliateJoiningFeeEnabled,
+    manualAffiliateJoiningFeeEnabled: !!body.manualAffiliateJoiningFeeEnabled,
+    manualButtonEnabled: !!body.manualButtonEnabled,
+    popEmail: String(body.popEmail || "femifresh02@gmail.com").trim(),
+    paymentTitle: String(body.paymentTitle || "Manual joining fee payment").trim(),
+    paymentInstructions: String(body.paymentInstructions || "").trim(),
+    bankName: String(body.bankName || "").trim(),
+    accountHolder: String(body.accountHolder || "").trim(),
+    accountNumber: String(body.accountNumber || "").trim(),
+    branchCode: String(body.branchCode || "").trim(),
+    referenceInstruction: String(body.referenceInstruction || "").trim()
+  });
+
+  res.json({ success: true, settings: saved });
+});
+
+app.get("/api/admin/manual-joining-pending", femiAdminCookieRequired, (req, res) => {
+  const affiliates = read("affiliates", []);
+  const pending = affiliates.filter(a => !femiAffiliateIsPaid(a));
+
+  res.json({
+    success: true,
+    affiliates: pending
+  });
+});
+
+app.post("/api/admin/manual-joining-approve", femiAdminCookieRequired, (req, res) => {
+  const body = req.body || {};
+  const id = String(body.affiliateId || body.id || "").trim();
+  const email = String(body.email || "").trim().toLowerCase();
+
+  const affiliates = read("affiliates", []);
+  const idx = affiliates.findIndex(a =>
+    String(a.id || "") === id ||
+    String(a.email || "").toLowerCase() === email
+  );
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, message: "Affiliate not found." });
+  }
+
+  affiliates[idx] = {
+    ...affiliates[idx],
+    joiningFeePaid: true,
+    manualJoiningFeePaid: true,
+    joiningFeeStatus: "paid",
+    paymentStatus: "paid",
+    status: "approved",
+    accountStatus: "approved",
+    approved: true,
+    isApproved: true,
+    approvedAt: affiliates[idx].approvedAt || new Date().toISOString(),
+    joiningFeePaidAt: new Date().toISOString(),
+    manualJoiningFeeApprovedAt: new Date().toISOString()
+  };
+
+  write("affiliates", affiliates);
+
+  res.json({
+    success: true,
+    affiliate: affiliates[idx]
+  });
+});
+
+app.post("/api/admin/manual-joining-unapprove", femiAdminCookieRequired, (req, res) => {
+  const body = req.body || {};
+  const id = String(body.affiliateId || body.id || "").trim();
+  const email = String(body.email || "").trim().toLowerCase();
+
+  const affiliates = read("affiliates", []);
+  const idx = affiliates.findIndex(a =>
+    String(a.id || "") === id ||
+    String(a.email || "").toLowerCase() === email
+  );
+
+  if (idx === -1) {
+    return res.status(404).json({ success: false, message: "Affiliate not found." });
+  }
+
+  affiliates[idx] = {
+    ...affiliates[idx],
+    joiningFeePaid: false,
+    manualJoiningFeePaid: false,
+    joiningFeeStatus: "pending",
+    paymentStatus: "pending",
+    status: "pending_payment",
+    accountStatus: "pending_payment",
+    approved: false,
+    isApproved: false
+  };
+
+  write("affiliates", affiliates);
+
+  res.json({
+    success: true,
+    affiliate: affiliates[idx]
+  });
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

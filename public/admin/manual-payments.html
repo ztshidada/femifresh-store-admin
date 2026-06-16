@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manual Payments | FemiFresh Admin</title>
+  <link rel="icon" href="/images/femifresh-logo.jpg">
+  <style>
+    :root{--p:#68235f;--d:#35112f;--pink:#f4a7d8;--line:#eaddea;--muted:#6f6372}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui;background:#f7f2f8;color:#241126}
+    .shell{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+    aside{background:#19091b;color:white;padding:24px}
+    .logo{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:950;margin-bottom:34px}
+    .logo img{width:52px;height:52px;object-fit:cover;border-radius:18px}
+    nav{display:grid;gap:8px}
+    nav a{color:rgba(255,255,255,.82);padding:13px 14px;border-radius:16px;text-decoration:none;font-weight:850}
+    nav a:hover,.active{background:rgba(255,255,255,.12);color:white}
+    main{padding:34px}
+    h1{font-size:clamp(42px,5vw,72px);letter-spacing:-.07em;margin:0 0 10px;color:var(--d)}
+    h2{color:var(--d)}
+    p{color:var(--muted);line-height:1.6}
+    .card{background:white;border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:0 18px 44px rgba(104,35,95,.08);margin-bottom:18px}
+    label{font-weight:900;color:var(--d);display:block;margin:14px 0 7px}
+    input,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px 15px;font-size:16px}
+    textarea{min-height:110px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .full{grid-column:1/-1}
+    .btn{border:0;border-radius:999px;background:linear-gradient(135deg,var(--p),#9b358e,var(--pink));color:white;font-weight:950;padding:13px 18px;cursor:pointer}
+    .btn.light{background:white;color:var(--p);border:1px solid var(--line)}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;border-bottom:1px solid var(--line);padding:13px}
+    th{color:var(--p);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    @media(max-width:900px){.shell{display:block}.grid{grid-template-columns:1fr}main{padding:18px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <aside>
+    <div class="logo"><img src="/images/femifresh-logo.jpg"><span>FemiFresh Admin</span></div>
+    <nav>
+      <a href="/admin/dashboard.html">Dashboard</a>
+      <a href="/admin/orders.html">Orders</a>
+      <a href="/admin/affiliates.html">Affiliates</a>
+      <a href="/admin/products.html">Products</a>
+      <a class="active" href="/admin/manual-payments.html">Manual Payments</a>
+      <a href="/admin/logs.html">Logs</a>
+    </nav>
+  </aside>
+  <main>
+    <h1>Manual Payments</h1>
+    <p>Set the payment instructions shown after affiliate sign-up, and approve affiliates after POP is received.</p>
+
+    <section class="card">
+      <h2>Payment Instructions</h2>
+      <div class="grid">
+        <div><label>Joining fee amount</label><input id="joiningFeeAmount" type="number"></div>
+        <div><label>POP email</label><input id="popEmail"></div>
+        <div><label>Bank name</label><input id="bankName"></div>
+        <div><label>Account holder</label><input id="accountHolder"></div>
+        <div><label>Account number</label><input id="accountNumber"></div>
+        <div><label>Branch code</label><input id="branchCode"></div>
+        <div class="full"><label>Payment title</label><input id="paymentTitle"></div>
+        <div class="full"><label>Payment instructions</label><textarea id="paymentInstructions"></textarea></div>
+        <div class="full"><label>Reference instruction</label><input id="referenceInstruction"></div>
+      </div>
+      <button class="btn" onclick="saveSettings()">Save Details</button>
+    </section>
+
+    <section class="card">
+      <h2>Pending Payment Approval</h2>
+      <div id="pendingBox">Loading...</div>
+    </section>
+  </main>
+</div>
+
+<script>
+async function api(url, opts={}){
+  const r = await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json"},...opts});
+  const j = await r.json().catch(()=>({success:false}));
+  if(r.status === 401){ location.href="/admin/login.html"; return {}; }
+  return j;
+}
+
+async function loadSettings(){
+  const d = await api("/api/admin/manual-joining-settings");
+  const s = d.settings || {};
+  joiningFeeAmount.value = s.joiningFeeAmount || 100;
+  popEmail.value = s.popEmail || "femifresh02@gmail.com";
+  bankName.value = s.bankName || "";
+  accountHolder.value = s.accountHolder || "";
+  accountNumber.value = s.accountNumber || "";
+  branchCode.value = s.branchCode || "";
+  paymentTitle.value = s.paymentTitle || "Manual joining fee payment";
+  paymentInstructions.value = s.paymentInstructions || "";
+  referenceInstruction.value = s.referenceInstruction || "";
+}
+
+async function saveSettings(){
+  const body = {
+    joiningFeeAmount:Number(joiningFeeAmount.value || 100),
+    popEmail:popEmail.value,
+    bankName:bankName.value,
+    accountHolder:accountHolder.value,
+    accountNumber:accountNumber.value,
+    branchCode:branchCode.value,
+    paymentTitle:paymentTitle.value,
+    paymentInstructions:paymentInstructions.value,
+    referenceInstruction:referenceInstruction.value,
+    manualAffiliateJoiningFeeEnabled:true,
+    yocoAffiliateJoiningFeeEnabled:false,
+    manualButtonEnabled:true
+  };
+
+  const d = await api("/api/admin/manual-joining-settings",{method:"POST",body:JSON.stringify(body)});
+  alert(d.success ? "Saved." : "Could not save.");
+}
+
+async function loadPending(){
+  const d = await api("/api/admin/manual-joining-pending");
+  const list = d.affiliates || [];
+
+  if(!list.length){
+    pendingBox.innerHTML = "<p>No pending manual payments.</p>";
+    return;
+  }
+
+  pendingBox.innerHTML = '<table><thead><tr><th>Name</th><th>Email</th><th>Code</th><th>Status</th><th></th></tr></thead><tbody>' +
+    list.map(a => `
+      <tr>
+        <td><b>${a.name || ((a.firstName||"")+" "+(a.lastName||""))}</b></td>
+        <td>${a.email || ""}</td>
+        <td>${a.code || a.referralCode || ""}</td>
+        <td>${a.status || a.accountStatus || "pending_payment"}</td>
+        <td><button class="btn light" onclick="approve('${a.id || ""}','${a.email || ""}')">Approve Paid</button></td>
+      </tr>
+    `).join("") + "</tbody></table>";
+}
+
+async function approve(id,email){
+  if(!confirm("Approve this affiliate as paid?")) return;
+  const d = await api("/api/admin/manual-joining-approve",{method:"POST",body:JSON.stringify({affiliateId:id,email})});
+  if(d.success){ alert("Approved."); loadPending(); }
+  else alert(d.message || "Could not approve.");
+}
+
+loadSettings();
+loadPending();
+</script>
+</body>
+</html>

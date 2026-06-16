@@ -1,69 +1,152 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <title>Join FemiFresh</title>
-  <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/femifresh-unified.css">
-  <link rel="stylesheet" href="/css/affiliate-premium.css">
-    <script src="/js/affiliate-payment-controller.js"></script>\n</head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Create Affiliate Account | FemiFresh</title>
+  <link rel="icon" href="/images/femifresh-logo.jpg">
+  <script src="/js/affiliate-signup-flow.js"></script>
+  <style>
+    :root{
+      --p:#68235f;
+      --d:#35112f;
+      --pink:#f4a7d8;
+      --line:rgba(104,35,95,.15);
+      --muted:#6f6372;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+      background:
+        radial-gradient(circle at 8% 12%,rgba(244,167,216,.30),transparent 28%),
+        radial-gradient(circle at 90% 18%,rgba(104,35,95,.12),transparent 26%),
+        linear-gradient(180deg,#fff8fd,#fff1fa 55%,#fffaf7);
+      color:#241126;
+      min-height:100vh;
+    }
+    .wrap{
+      width:min(1180px,calc(100% - 32px));
+      margin:auto;
+      padding:70px 0;
+      display:grid;
+      grid-template-columns:1fr .9fr;
+      gap:32px;
+      align-items:start;
+    }
+    .card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:32px;
+      padding:34px;
+      box-shadow:0 22px 60px rgba(104,35,95,.10);
+    }
+    h1{
+      margin:0 0 16px;
+      font-size:clamp(44px,7vw,82px);
+      line-height:.95;
+      letter-spacing:-.07em;
+      color:var(--d);
+    }
+    h2{margin:0 0 12px;color:var(--d)}
+    p{color:var(--muted);line-height:1.65;font-size:17px}
+    form{display:grid;gap:14px}
+    input{
+      width:100%;
+      min-height:54px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 16px;
+      font-size:16px;
+    }
+    button,.btn{
+      width:100%;
+      min-height:56px;
+      border:0;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--p),#9b358e,var(--pink));
+      color:white;
+      font-weight:950;
+      font-size:16px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    }
+    .manual{
+      background:#fff1fa;
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:20px;
+      margin-top:18px;
+    }
+    .success{
+      display:none;
+      background:#e9fff1;
+      border:1px solid #b8efc9;
+      color:#14592b;
+      border-radius:22px;
+      padding:18px;
+      margin-top:18px;
+    }
+    .error{
+      display:none;
+      background:#ffe1e8;
+      border:1px solid #ffbccb;
+      color:#8a0020;
+      border-radius:22px;
+      padding:18px;
+      margin-top:18px;
+    }
+    .logo{
+      width:86px;
+      height:86px;
+      object-fit:cover;
+      border-radius:26px;
+      box-shadow:0 16px 34px rgba(104,35,95,.14);
+      margin-bottom:18px;
+    }
+    @media(max-width:900px){
+      .wrap{grid-template-columns:1fr;padding:40px 0}
+      .card{padding:24px}
+    }
+  </style>
+</head>
 <body>
+  <main class="wrap">
+    <section class="card">
+      <img class="logo" src="/images/femifresh-logo.jpg" alt="FemiFresh">
+      <h1>Create account</h1>
+      <p>Sign up as a FemiFresh affiliate. Your account will be created first, but earning and account functions will stay locked until admin approves your joining fee payment.</p>
 
+      <form id="signupForm">
+        <input name="firstName" placeholder="First name" required>
+        <input name="lastName" placeholder="Last name" required>
+        <input name="phone" placeholder="Phone" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <input name="password" type="password" placeholder="Password" required>
+        <input name="sponsorCode" placeholder="Sponsor code optional">
+        <button type="submit">Sign Up</button>
+      </form>
 
+      <p style="margin-top:18px;">Already joined? <a href="/login" style="color:var(--p);font-weight:900;">Login</a></p>
 
+      <div class="success" id="successBox"></div>
+      <div class="error" id="errorBox"></div>
+    </section>
 
-<main class="affiliate-page">
-  <section class="container affiliate-wrap">
-    
-    </div>
+    <aside class="card">
+      <h2 id="manualTitle">Manual joining fee payment</h2>
+      <div class="manual" id="manualBox">
+        Loading payment instructions...
+      </div>
+    </aside>
+  </main>
 
-    <form class="affiliate-card" onsubmit="registerAffiliate(event)">
-      <h2>Create account</h2>
-      <input name="firstName" placeholder="First name" required>
-      <input name="lastName" placeholder="Last name" required>
-      <input name="phone" placeholder="Phone" required>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <input name="sponsorCode" id="sponsorCode" placeholder="Sponsor code optional">
-      
-      <p>Already joined? <a href="/login">Login</a></p>
-    </form>
-  </section>
-</main>
-
-<script>
-const ref = new URLSearchParams(location.search).get("ref");
-if (ref) document.getElementById("sponsorCode").value = ref;
-
-async function registerAffiliate(e) {
-  e.preventDefault();
-  const body = {};
-  new FormData(e.target).forEach((value, key) => body[key] = value);
-
-  const res = await fetch("/api/affiliate/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-
-  const data = await res.json();
-
-  if (!data.success) {
-    alert(data.message || "Registration failed.");
-    return;
-  }
-
-  localStorage.setItem("ff_affiliate_token", data.token);
-  localStorage.setItem("ff_affiliate", JSON.stringify(data.affiliate));
-  location.href = data.checkoutUrl;
-}
-</script>
-
-
-  
-<div class="MANUAL_PAYMENT_NOTICE_SAFE_V1" style="max-width:640px;margin:24px auto 0;padding:18px 22px;border-radius:22px;background:#fff1fa;border:1px solid rgba(104,35,95,.15);color:#35112f;font-family:Inter,system-ui;box-shadow:0 18px 40px rgba(104,35,95,.10);">
-      <strong>Online payment is paused.</strong><br>
-      Please pay the once-off <strong>R100 joining fee</strong> manually and email proof to <strong>femifresh02@gmail.com</strong>.<br>
-      Use your registered affiliate email as reference.
-    </div>
+  <script>
+    window.FF_REGISTER_ENDPOINT = "/api/affiliate/register";
+  </script>
 </body>
 </html>
