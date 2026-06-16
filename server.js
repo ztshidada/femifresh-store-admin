@@ -2036,4 +2036,70 @@ app.post("/api/affiliate/reset-password", async (req, res) => {
 });
 // END AFFILIATE_FORGOT_PASSWORD_V1
 
+
+
+// FEMIFRESH_PAYMENT_SETTINGS_CONTROL_V1
+function femiDefaultPaymentSettings() {
+  return {
+    manualAffiliateJoiningFeeEnabled: true,
+    yocoAffiliateJoiningFeeEnabled: false,
+    manualPaymentButtonEnabled: true,
+    joiningFeeAmount: 100,
+    manualPaymentEmail: "femifresh02@gmail.com",
+    manualPaymentInstruction: "Pay the once-off R100 joining fee manually and email proof of payment to femifresh02@gmail.com. Use your registered affiliate email as reference."
+  };
+}
+
+function femiGetPaymentSettings() {
+  const settings = read("settings", {});
+  return {
+    ...femiDefaultPaymentSettings(),
+    ...(settings.paymentSettings || {})
+  };
+}
+
+function femiSimpleAdminCookieCheck(req, res, next) {
+  const cookieHeader = req.headers.cookie || "";
+  if (!cookieHeader.includes("ff_admin_token=")) {
+    return res.status(401).json({ success: false, message: "Admin login required." });
+  }
+  next();
+}
+
+app.get("/api/payment-settings", (req, res) => {
+  res.json({
+    success: true,
+    settings: femiGetPaymentSettings()
+  });
+});
+
+app.get("/api/admin/payment-settings", femiSimpleAdminCookieCheck, (req, res) => {
+  res.json({
+    success: true,
+    settings: femiGetPaymentSettings()
+  });
+});
+
+app.post("/api/admin/payment-settings", femiSimpleAdminCookieCheck, (req, res) => {
+  const settings = read("settings", {});
+  const current = femiGetPaymentSettings();
+
+  settings.paymentSettings = {
+    ...current,
+    manualAffiliateJoiningFeeEnabled: !!req.body.manualAffiliateJoiningFeeEnabled,
+    yocoAffiliateJoiningFeeEnabled: !!req.body.yocoAffiliateJoiningFeeEnabled,
+    manualPaymentButtonEnabled: !!req.body.manualPaymentButtonEnabled,
+    joiningFeeAmount: Number(req.body.joiningFeeAmount || 100),
+    manualPaymentEmail: String(req.body.manualPaymentEmail || "femifresh02@gmail.com").trim(),
+    manualPaymentInstruction: String(req.body.manualPaymentInstruction || current.manualPaymentInstruction).trim()
+  };
+
+  write("settings", settings);
+
+  res.json({
+    success: true,
+    settings: settings.paymentSettings
+  });
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
