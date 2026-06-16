@@ -1,0 +1,25 @@
+
+/* ADMIN_BASIC_SAFE_V1 - visual only, does not move layout */
+body {
+  background: #fff8fd !important;
+  color: #241126;
+}
+
+button,
+.btn,
+input[type="submit"] {
+  border-radius: 999px !important;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px !important;
+}
+
+.card,
+.panel,
+table,
+form {
+  border-radius: 18px !important;
+}
