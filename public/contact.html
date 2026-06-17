@@ -3,69 +3,142 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Contact FemiFresh</title>
+  <title>Contact | FemiFresh</title>
   <link rel="icon" href="/images/femifresh-logo.jpg">
-  <link rel="stylesheet" href="/css/femifresh-unified.css">
-  <link rel="stylesheet" href="/css/femifresh-mobile-system.css">
-  <link rel="stylesheet" href="/css/femi-senafix-style.css">
-    <link rel="stylesheet" href="/css/femi-store-stable.css">
+  <link rel="stylesheet" href="/css/femi-store-stable.css">
+  <style>
+    .contact-page{
+      width:min(1180px,calc(100% - 32px));
+      margin:60px auto;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:28px;
+      align-items:start;
+    }
+    .contact-card{
+      background:white;
+      border:1px solid rgba(104,35,95,.14);
+      border-radius:34px;
+      padding:34px;
+      box-shadow:0 22px 60px rgba(104,35,95,.10);
+    }
+    .contact-card h1{
+      margin:0 0 14px;
+      font-size:clamp(44px,7vw,78px);
+      line-height:.95;
+      letter-spacing:-.07em;
+      color:#35112f;
+    }
+    .contact-card h2{
+      margin:0 0 14px;
+      color:#35112f;
+      font-size:34px;
+      letter-spacing:-.05em;
+    }
+    .contact-card p{
+      color:#6f6372;
+      line-height:1.65;
+      font-size:18px;
+    }
+    .contact-row{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      border-bottom:1px solid rgba(104,35,95,.12);
+      padding:14px 0;
+      font-size:17px;
+    }
+    .contact-row span:first-child{
+      color:#6f6372;
+      font-weight:850;
+    }
+    .contact-row span:last-child{
+      color:#35112f;
+      font-weight:950;
+      text-align:right;
+    }
+    .contact-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:22px;
+    }
+    .contact-btn{
+      min-height:52px;
+      padding:13px 22px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      font-weight:950;
+    }
+    .contact-btn.primary{
+      background:linear-gradient(135deg,#68235f,#9b358e,#f4a7d8);
+      color:white;
+    }
+    .contact-btn.light{
+      background:white;
+      color:#68235f;
+      border:1px solid rgba(104,35,95,.14);
+    }
+    @media(max-width:900px){
+      .contact-page{
+        grid-template-columns:1fr;
+        margin:28px auto;
+      }
+      .contact-card{
+        padding:24px;
+      }
+      .contact-row{
+        display:block;
+      }
+      .contact-row span:last-child{
+        display:block;
+        text-align:left;
+        margin-top:4px;
+      }
+      .contact-btn{
+        width:100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <main class="contact-page">
+    <section class="contact-card">
+      <h1>Contact FemiFresh</h1>
+      <p>
+        Need help with an order, affiliate account, payment proof, or stock package?
+        Contact us and we will assist you.
+      </p>
 
+      <div class="contact-row"><span>Email</span><span>femifresh02@gmail.com</span></div>
+      <div class="contact-row"><span>WhatsApp</span><span>0632180372</span></div>
+      <div class="contact-row"><span>POP WhatsApp</span><span>0632180372</span></div>
 
-
-<header class="ff-site-header">
-  <nav class="ff-nav">
-    <a class="ff-brand" href="/">
-      <img src="/images/femifresh-logo.jpg" alt="FemiFresh logo">
-      <span>FemiFresh</span>
-    </a>
-
-    <button class="ff-menu" id="ffMenuBtn" aria-label="Open menu">☰</button>
-
-    <div class="ff-navlinks" id="ffNavLinks">
-      <a href="/">Home</a>
-      <a href="/products.html">Products</a>
-      <a href="/cart.html">Cart</a>
-      <a href="/policies.html">Policy</a>
-      <a href="/contact.html">Contact</a>
-    </div>
-  </nav>
-</header>
-
-<main>
-  <section class="ff-page-hero">
-    <h1>Contact FemiFresh</h1>
-    <p>For orders, affiliate support, stock packages and general enquiries, please contact us by email.</p>
-  </section>
-
-  <section style="padding:26px 0 90px;">
-    <div class="ff-card" style="max-width:760px;margin:auto;padding:36px;text-align:center;">
-      <img src="/images/femifresh-logo.jpg" alt="FemiFresh" style="width:110px;height:110px;object-fit:cover;border-radius:28px;margin-bottom:18px;">
-      <h2 style="margin:0 0 12px;">We’re here to help.</h2>
-      <p style="margin-bottom:24px;">Send us an email and our team will assist you as soon as possible.</p>
-      <a class="ff-secondary btn" href="mailto:femifresh02@gmail.com">femifresh02@gmail.com</a>
-      <div style="margin-top:28px;">
-        <a class="btn" href="/products.html">Shop Products</a>
+      <div class="contact-actions">
+        <a class="contact-btn primary" href="https://wa.me/27632180372">Chat on WhatsApp</a>
+        <a class="contact-btn light" href="mailto:femifresh02@gmail.com">Send Email</a>
       </div>
-    </div>
-  </section>
-</main>
+    </section>
 
+    <section class="contact-card">
+      <h2>Manual Payment Details</h2>
+      <p>Use these details for manual payments and send POP to WhatsApp.</p>
 
+      <div class="contact-row"><span>Bank</span><span>FNB</span></div>
+      <div class="contact-row"><span>Account Name</span><span>Femi Fresh (PTY) LTD</span></div>
+      <div class="contact-row"><span>Account Type</span><span>FNB Business Account</span></div>
+      <div class="contact-row"><span>Account Number</span><span>63214749822</span></div>
+      <div class="contact-row"><span>Reference</span><span>Order number, phone number, or affiliate email</span></div>
 
+      <p style="font-weight:850;color:#35112f;margin-top:18px;">
+        Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days.
+      </p>
+    </section>
+  </main>
 
-
-
-<script>
-  const ffMenuBtn = document.getElementById("ffMenuBtn");
-  const ffNavLinks = document.getElementById("ffNavLinks");
-  if (ffMenuBtn && ffNavLinks) {
-    ffMenuBtn.addEventListener("click", () => ffNavLinks.classList.toggle("open"));
-  }
-</script>
-  <script src="/js/femifresh-mobile-system.js"></script>
-  <script src="/js/femi-senafix-style.js"></script>
-    <script src="/js/femi-store-stable.js"></script>
+  <script src="/js/femi-store-stable.js"></script>
 </body>
 </html>

@@ -387,3 +387,29 @@ body.ff-has-clean-header > header:not(.ff-clean-header) {
 body.ff-has-clean-footer > footer:not(.ff-clean-footer) {
   display: none !important;
 }
+
+
+/* CART_AFTER_CONTACT_CORNER_V1 */
+.ff-clean-links {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ff-clean-links .ff-clean-cart {
+  margin-left: 10px !important;
+  order: 99 !important;
+  flex: 0 0 56px !important;
+}
+
+@media(max-width:900px){
+  .ff-clean-links .ff-clean-cart {
+    width: 100% !important;
+    flex: auto !important;
+    margin-left: 0 !important;
+  }
+
+  .ff-clean-links .ff-clean-cart::before {
+    content: "Cart ";
+    font-size: 15px;
+  }
+}

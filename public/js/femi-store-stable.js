@@ -35,9 +35,9 @@
         <div class="ff-clean-links">
           <a href="/">Home</a>
           <a href="/products.html">Products</a>
-          <a href="/cart.html" class="ff-clean-cart">🛒</a>
           <a href="/policies.html">Policy</a>
           <a href="/contact.html">Contact</a>
+          <a href="/cart.html" class="ff-clean-cart">🛒</a>
         </div>
       </nav>
     `;
