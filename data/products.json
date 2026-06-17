@@ -1,44 +1,5 @@
 [
   {
-    "name": "FemiFresh Anti-Chafe Balm",
-    "slug": "femifresh-anti-chafe-balm",
-    "category": "Body Care",
-    "description": "Smooth glide comfort balm for thighs and sensitive skin areas. Helps with everyday comfort.",
-    "image": "/images/products/anti-chafe-balm.jpeg",
-    "id": "bb80b6ab-139b-4f2c-93e7-a59b5b4ab64b",
-    "price": 1350,
-    "stockPrice": 0,
-    "stock": 100,
-    "active": true,
-    "createdAt": "2026-05-29T14:16:43.234580Z"
-  },
-  {
-    "name": "FemiFresh Cranberries Urinary Tract Tea",
-    "slug": "femifresh-cranberries-urinary-tract-tea",
-    "category": "Wellness Tea",
-    "description": "Cranberries urinary tract tea for daily care and natural wellness support.",
-    "image": "/images/products/cranberries-urinary-tract-tea.jpeg",
-    "id": "175f2e3f-d73b-4d62-9da0-ecd95c28c0a1",
-    "price": 1350,
-    "stockPrice": 0,
-    "stock": 100,
-    "active": true,
-    "createdAt": "2026-05-29T14:16:43.234580Z"
-  },
-  {
-    "name": "FemiFresh Distributor T-Shirt",
-    "slug": "femifresh-distributor-tshirt",
-    "category": "Merchandise",
-    "description": "FemiFresh branded distributor T-shirt for events, meetings, activations and daily wear.",
-    "image": "/images/products/distributor-tshirt.jpeg",
-    "id": "02c94d4b-80f4-4929-bcdd-ea186de07fb6",
-    "price": 1350,
-    "stockPrice": 0,
-    "stock": 100,
-    "active": true,
-    "createdAt": "2026-05-29T14:16:43.234580Z"
-  },
-  {
     "name": "FemiFresh Starter Business Pack - Full Stock",
     "slug": "femifresh-starter-business-pack",
     "category": "Full Stock",

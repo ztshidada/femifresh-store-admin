@@ -2384,4 +2384,54 @@ async function cleanDuplicateStarterBusinessPackOnce() {
 
 setTimeout(cleanDuplicateStarterBusinessPackOnce, 3000);
 
+
+
+// CLEAN_BASE_PRODUCT_DUPLICATES_V1
+async function cleanBaseProductDuplicatesOnce() {
+  try {
+    if (global.ensureFemiDbReady) await global.ensureFemiDbReady();
+
+    if (typeof read !== "function" || typeof write !== "function") return;
+
+    const baseNamesToRemove = [
+      "femifresh anti-chafe balm",
+      "femifresh cranberries urinary tract tea",
+      "femifresh distributor t-shirt",
+      "femifresh starter business pack"
+    ];
+
+    function normalize(v) {
+      return String(v || "").toLowerCase().trim();
+    }
+
+    function isBaseDuplicate(p) {
+      const name = normalize(p.name || p.title);
+      const category = normalize(p.category);
+
+      return (
+        baseNamesToRemove.includes(name) &&
+        !name.includes("full stock") &&
+        !name.includes("half stock") &&
+        category !== "full stock" &&
+        category !== "half stock"
+      );
+    }
+
+    let products = read("products", []);
+    if (!Array.isArray(products)) return;
+
+    const before = products.length;
+    products = products.filter(p => !isBaseDuplicate(p));
+
+    if (products.length !== before) {
+      write("products", products);
+      console.log("Cleaned base product duplicates. Before:", before, "After:", products.length);
+    }
+  } catch (e) {
+    console.error("Could not clean base product duplicates:", e.message);
+  }
+}
+
+setTimeout(cleanBaseProductDuplicatesOnce, 3500);
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
