@@ -1,7 +1,7 @@
 
 (function(){
   const MANUAL_EMAIL = "femifresh02@gmail.com";
-  const MESSAGE = "Online payment is paused while Yoco reviews femifresh.co.za. Your order can still be placed. Please send proof of payment to WhatsApp femifresh02@gmail.com with your order number.";
+  const MESSAGE = "Online payment is paused while Yoco reviews femifresh.co.za. Your order can still be placed. Send POP to WhatsApp 0632180372 with your order number. Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days.";
 
   function showManualBox(order){
     if (document.getElementById("ffManualStorePaymentBox")) return;
@@ -23,7 +23,7 @@
       Please send proof of payment to WhatsApp:<br>
       <strong>${MANUAL_EMAIL}</strong><br>
       WhatsApp POP: <strong>0632180372</strong><br><br>
-      Use your order number or phone number as reference.
+      Use your order number or phone number as reference.<br><br><strong>Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days.</strong>
     `;
 
     const paymentSection =
