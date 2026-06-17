@@ -2113,12 +2113,12 @@ function femiManualJoiningDefaults() {
     manualButtonEnabled: true,
     popEmail: "femifresh02@gmail.com",
     paymentTitle: "Manual joining fee payment",
-    paymentInstructions: "Pay the once-off R100 joining fee manually to the FNB business account below. Email proof of payment to femifresh02@gmail.com or WhatsApp POP to 0632180372. Use your registered affiliate email as reference.",
+    paymentInstructions: "Pay the joining fee manually to the FNB business account below. Send proof of payment to WhatsApp 0632180372. You can also email POP to femifresh02@gmail.com. Use your registered affiliate email as reference.",
     bankName: "FNB",
     accountHolder: "Femi Fresh (PTY) LTD",
     accountNumber: "63214749822",
     branchCode: "",
-    referenceInstruction: "Use your registered affiliate email as reference."
+    referenceInstruction: "Use your registered affiliate email as reference and send POP to WhatsApp 0632180372."
   };
 }
 

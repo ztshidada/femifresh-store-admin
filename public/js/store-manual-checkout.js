@@ -1,7 +1,7 @@
 
 (function(){
   const MANUAL_EMAIL = "femifresh02@gmail.com";
-  const MESSAGE = "Online payment is paused while Yoco reviews femifresh.co.za. Your order can still be placed. Please email proof of payment to femifresh02@gmail.com with your order number.";
+  const MESSAGE = "Online payment is paused while Yoco reviews femifresh.co.za. Your order can still be placed. Please send proof of payment to WhatsApp femifresh02@gmail.com with your order number.";
 
   function showManualBox(order){
     if (document.getElementById("ffManualStorePaymentBox")) return;
@@ -20,9 +20,9 @@
       Account Name: <strong>Femi Fresh (PTY) LTD</strong><br>
       Account Type: <strong>FNB Business Account</strong><br>
       Account Number: <strong>63214749822</strong><br><br>
-      Please email proof of payment to:<br>
+      Please send proof of payment to WhatsApp:<br>
       <strong>${MANUAL_EMAIL}</strong><br>
-      Or send POP to: <strong>0632180372</strong><br><br>
+      WhatsApp POP: <strong>0632180372</strong><br><br>
       Use your order number or phone number as reference.
     `;
 
@@ -38,7 +38,7 @@
   function removeYocoText(){
     document.querySelectorAll("*").forEach(el => {
       if (!el.children.length && el.textContent && el.textContent.includes("Yoco payment will be connected")) {
-        el.textContent = "Online payment is paused while Yoco reviews the website. Place your order and email proof of payment to femifresh02@gmail.com.";
+        el.textContent = "Online payment is paused while Yoco reviews the website. Place your order and send POP to WhatsApp 0632180372.";
       }
     });
   }
