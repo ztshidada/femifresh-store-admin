@@ -1,4 +1,33 @@
+const fs = require("fs");
+const path = require("path");
 
+const publicDir = path.join(__dirname, "public");
+const jsDir = path.join(publicDir, "js");
+const serverFile = path.join(__dirname, "server.js");
+
+/* 1. Update server defaults for admin manual payment details */
+let server = fs.readFileSync(serverFile, "utf8");
+
+server = server.replace(/bankName:\s*"[^"]*"/g, 'bankName: "FNB"');
+server = server.replace(/accountHolder:\s*"[^"]*"/g, 'accountHolder: "Femi Fresh (PTY) LTD"');
+server = server.replace(/accountNumber:\s*"[^"]*"/g, 'accountNumber: "63214749822"');
+server = server.replace(/branchCode:\s*"[^"]*"/g, 'branchCode: ""');
+server = server.replace(/popEmail:\s*"[^"]*"/g, 'popEmail: "femifresh02@gmail.com"');
+
+server = server.replace(
+  /paymentInstructions:\s*"[^"]*"/g,
+  'paymentInstructions: "Pay the once-off R100 joining fee to the FNB business account below. Send proof of payment to WhatsApp 0632180372. Use your registered affiliate email as reference. Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days."'
+);
+
+server = server.replace(
+  /referenceInstruction:\s*"[^"]*"/g,
+  'referenceInstruction: "Use your registered affiliate email as reference."'
+);
+
+fs.writeFileSync(serverFile, server);
+
+/* 2. Replace affiliate dashboard locked screen */
+fs.writeFileSync(path.join(jsDir, "affiliate-dashboard-gate.js"), `
 (async function(){
   const BANK = {
     amount: 100,
@@ -77,7 +106,7 @@
   }
 
   function row(label, val){
-    return `
+    return \`
       <div style="
         display:flex;
         justify-content:space-between;
@@ -85,10 +114,10 @@
         padding:12px 0;
         border-bottom:1px solid rgba(104,35,95,.12);
       ">
-        <span style="color:#6f6372;font-weight:800;">${label}</span>
-        <strong style="color:#35112f;text-align:right;">${val}</strong>
+        <span style="color:#6f6372;font-weight:800;">\${label}</span>
+        <strong style="color:#35112f;text-align:right;">\${val}</strong>
       </div>
-    `;
+    \`;
   }
 
   function buildLockedScreen(a){
@@ -100,7 +129,7 @@
     const accountType = "FNB Business Account";
     const whatsapp = BANK.whatsapp;
 
-    document.body.innerHTML = `
+    document.body.innerHTML = \`
       <main style="
         min-height:100vh;
         padding:34px 16px;
@@ -143,7 +172,7 @@
           </h1>
 
           <p style="font-size:18px;line-height:1.65;color:#6f6372;margin:0 0 22px;">
-            Hi <strong>${firstName}</strong>, your account has been created. Your dashboard will unlock after admin confirms your joining fee payment.
+            Hi <strong>\${firstName}</strong>, your account has been created. Your dashboard will unlock after admin confirms your joining fee payment.
           </p>
 
           <div style="
@@ -157,13 +186,13 @@
               Manual joining fee payment
             </h2>
 
-            ${row("Amount", "R" + amount)}
-            ${row("Bank", bankName)}
-            ${row("Account Name", accountHolder)}
-            ${row("Account Type", accountType)}
-            ${row("Account Number", accountNumber)}
-            ${row("POP WhatsApp", whatsapp)}
-            ${row("Reference", "Your registered affiliate email")}
+            \${row("Amount", "R" + amount)}
+            \${row("Bank", bankName)}
+            \${row("Account Name", accountHolder)}
+            \${row("Account Type", accountType)}
+            \${row("Account Number", accountNumber)}
+            \${row("POP WhatsApp", whatsapp)}
+            \${row("Reference", "Your registered affiliate email")}
 
             <div style="
               margin-top:18px;
@@ -217,7 +246,7 @@
           </div>
         </section>
       </main>
-    `;
+    \`;
   }
 
   window.logoutAffiliate = function(){
@@ -242,3 +271,23 @@
     }, 400);
   });
 })();
+`);
+
+/* 3. Remove duplicate/manual old boxes from dashboard HTML */
+const dashFile = path.join(publicDir, "affiliate-dashboard.html");
+if (fs.existsSync(dashFile)) {
+  let html = fs.readFileSync(dashFile, "utf8");
+
+  html = html.replace(/<script[^>]+affiliate-dashboard-gate\.js[^>]*><\/script>\s*/gi, "");
+  html = html.replace(/<div[^>]*MANUAL_PAYMENT_NOTICE_SAFE_V1[\s\S]*?<\/div>/gi, "");
+  html = html.replace(/<div[^>]*MANUAL_AFFILIATE_PAYMENT_NOTICE_V2[\s\S]*?<\/div>/gi, "");
+  html = html.replace(/<section[^>]*id=["']ffDashboardLock["'][\s\S]*?<\/section>/gi, "");
+  html = html.replace(/<div[^>]*id=["']ffManualPaymentBox["'][\s\S]*?<\/div>/gi, "");
+  html = html.replace(/\\n/g, "\n");
+
+  html = html.replace("</head>", '  <script src="/js/affiliate-dashboard-gate.js"></script>\n</head>');
+
+  fs.writeFileSync(dashFile, html);
+}
+
+console.log("Affiliate locked dashboard now shows clean FNB banking details.");
