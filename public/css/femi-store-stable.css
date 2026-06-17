@@ -365,3 +365,13 @@ body > header:not(.ff-clean-header){
     margin-top:4px;
   }
 }
+
+
+/* HIDE_OLD_FOOTER_DUPLICATES_V1 */
+body > footer:not(.ff-clean-footer) {
+  display: none !important;
+}
+
+body > section:last-of-type:has(+ .ff-clean-footer) {
+  display: none !important;
+}
