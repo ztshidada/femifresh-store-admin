@@ -27,9 +27,7 @@ body{
 }
 
 /* force old headers not to fight */
-body > header:not(.ff-clean-header){
-  display:none !important;
-}
+
 
 .ff-clean-header{
   position:sticky;
@@ -368,10 +366,24 @@ body > header:not(.ff-clean-header){
 
 
 /* HIDE_OLD_FOOTER_DUPLICATES_V1 */
-body > footer:not(.ff-clean-footer) {
+
+
+
+
+
+/* RESTORE_HEADER_FOOTER_SAFE_V1 */
+.ff-clean-header {
+  display: block !important;
+}
+
+.ff-clean-footer {
+  display: block !important;
+}
+
+body.ff-has-clean-header > header:not(.ff-clean-header) {
   display: none !important;
 }
 
-body > section:last-of-type:has(+ .ff-clean-footer) {
+body.ff-has-clean-footer > footer:not(.ff-clean-footer) {
   display: none !important;
 }

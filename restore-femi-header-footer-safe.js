@@ -1,4 +1,56 @@
+const fs = require("fs");
+const path = require("path");
 
+const publicDir = path.join(__dirname, "public");
+const cssFile = path.join(publicDir, "css", "femi-store-stable.css");
+const jsFile = path.join(publicDir, "js", "femi-store-stable.js");
+
+function walk(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
+  for (const item of fs.readdirSync(dir)) {
+    const full = path.join(dir, item);
+    const stat = fs.statSync(full);
+    if (stat.isDirectory()) walk(full, out);
+    else if (stat.isFile() && full.endsWith(".html")) out.push(full);
+  }
+  return out;
+}
+
+/* 1) Stop hiding existing headers/footers */
+if (fs.existsSync(cssFile)) {
+  let css = fs.readFileSync(cssFile, "utf8");
+
+  css = css.replace(/body\s*>\s*header:not\(\.ff-clean-header\)\s*\{[\s\S]*?\}/gi, "");
+  css = css.replace(/body\s*>\s*footer:not\(\.ff-clean-footer\)\s*\{[\s\S]*?\}/gi, "");
+  css = css.replace(/body\s*>\s*section:last-of-type:has\(\+\s*\.ff-clean-footer\)\s*\{[\s\S]*?\}/gi, "");
+
+  if (!css.includes("RESTORE_HEADER_FOOTER_SAFE_V1")) {
+    css += `
+
+/* RESTORE_HEADER_FOOTER_SAFE_V1 */
+.ff-clean-header {
+  display: block !important;
+}
+
+.ff-clean-footer {
+  display: block !important;
+}
+
+body.ff-has-clean-header > header:not(.ff-clean-header) {
+  display: none !important;
+}
+
+body.ff-has-clean-footer > footer:not(.ff-clean-footer) {
+  display: none !important;
+}
+`;
+  }
+
+  fs.writeFileSync(cssFile, css);
+}
+
+/* 2) Make JS add header/footer immediately and safely */
+fs.writeFileSync(jsFile, `
 (function(){
   const BANK = {
     bank:"FNB",
@@ -19,7 +71,7 @@
 
     const header = document.createElement("header");
     header.className = "ff-clean-header";
-    header.innerHTML = `
+    header.innerHTML = \`
       <nav class="ff-clean-nav">
         <a class="ff-clean-brand" href="/">
           <img src="/images/femifresh-logo.jpg" alt="FemiFresh">
@@ -40,7 +92,7 @@
           <a href="/contact.html">Contact</a>
         </div>
       </nav>
-    `;
+    \`;
 
     document.body.prepend(header);
     document.body.classList.add("ff-has-clean-header");
@@ -69,7 +121,7 @@
 
     const footer = document.createElement("footer");
     footer.className = "ff-clean-footer";
-    footer.innerHTML = `
+    footer.innerHTML = \`
       <div class="ff-footer-inner">
         <div>
           <div class="ff-footer-brand">
@@ -94,27 +146,27 @@
         </div>
       </div>
       <div class="ff-footer-bottom">© 2026 FemiFresh. All rights reserved.</div>
-    `;
+    \`;
 
     document.body.appendChild(footer);
     document.body.classList.add("ff-has-clean-footer");
   }
 
   function manualCard(orderNo){
-    return `
+    return \`
       <div class="ff-manual-card">
         <h3>Manual Payment Details</h3>
-        <div class="ff-bank-row"><span>Bank</span><span>${BANK.bank}</span></div>
-        <div class="ff-bank-row"><span>Account Name</span><span>${BANK.name}</span></div>
-        <div class="ff-bank-row"><span>Account Type</span><span>${BANK.type}</span></div>
-        <div class="ff-bank-row"><span>Account Number</span><span>${BANK.number}</span></div>
-        <div class="ff-bank-row"><span>POP WhatsApp</span><span>${BANK.whatsapp}</span></div>
-        <div class="ff-bank-row"><span>Reference</span><span>${orderNo || "Use your order number"}</span></div>
+        <div class="ff-bank-row"><span>Bank</span><span>\${BANK.bank}</span></div>
+        <div class="ff-bank-row"><span>Account Name</span><span>\${BANK.name}</span></div>
+        <div class="ff-bank-row"><span>Account Type</span><span>\${BANK.type}</span></div>
+        <div class="ff-bank-row"><span>Account Number</span><span>\${BANK.number}</span></div>
+        <div class="ff-bank-row"><span>POP WhatsApp</span><span>\${BANK.whatsapp}</span></div>
+        <div class="ff-bank-row"><span>Reference</span><span>\${orderNo || "Use your order number"}</span></div>
         <p style="font-weight:850;margin:14px 0 0;">
           Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days.
         </p>
       </div>
-    `;
+    \`;
   }
 
   function addCheckoutManualCard(){
@@ -139,7 +191,7 @@
     if(!raw) return "FF-10001";
     const s = String(raw);
     if(s.startsWith("FF-")) return s;
-    const digits = s.match(/\d+/);
+    const digits = s.match(/\\d+/);
     if(!digits) return "FF-10001";
     const n = Number(digits[0]);
     if(n >= 10000) return "FF-" + n;
@@ -218,18 +270,18 @@
 
     const page = document.createElement("main");
     page.className = "ff-thankyou-page";
-    page.innerHTML = `
+    page.innerHTML = \`
       <section class="ff-thankyou-card">
         <h1>Thank you.</h1>
         <p style="color:#6f6372;font-size:18px;line-height:1.65;">
           Your order has been created successfully. Please complete manual payment and send proof of payment.
         </p>
 
-        <div class="ff-order-chip">Order Number: ${orderNo}</div>
+        <div class="ff-order-chip">Order Number: \${orderNo}</div>
 
         <div style="margin-top:22px;">
           <h2 style="color:#35112f;">Order Summary</h2>
-          <p><strong>Total:</strong> ${order.total ? "R" + Number(order.total).toLocaleString("en-ZA",{minimumFractionDigits:2}) : "Check your order total"}</p>
+          <p><strong>Total:</strong> \${order.total ? "R" + Number(order.total).toLocaleString("en-ZA",{minimumFractionDigits:2}) : "Check your order total"}</p>
           <p><strong>Payment Method:</strong> Manual Payment</p>
           <p><strong>Status:</strong> Pending payment confirmation</p>
         </div>
@@ -241,9 +293,9 @@
       </section>
 
       <aside class="ff-thankyou-card">
-        ${manualCard(orderNo)}
+        \${manualCard(orderNo)}
       </aside>
-    `;
+    \`;
 
     document.body.appendChild(page);
     makeFooter();
@@ -268,3 +320,26 @@
     boot();
   }
 })();
+`);
+
+/* 3) Re-inject CSS/JS correctly on public store pages */
+const files = walk(publicDir).filter(file =>
+  !file.includes(path.join("public", "admin")) &&
+  !path.basename(file).startsWith("affiliate-") &&
+  !["join.html","join-success.html"].includes(path.basename(file))
+);
+
+for (const file of files) {
+  let html = fs.readFileSync(file, "utf8");
+
+  html = html.replace(/<link[^>]+femi-store-stable\.css[^>]*>\s*/gi, "");
+  html = html.replace(/<script[^>]+femi-store-stable\.js[^>]*><\/script>\s*/gi, "");
+
+  html = html.replace("</head>", '  <link rel="stylesheet" href="/css/femi-store-stable.css">\n</head>');
+  html = html.replace("</body>", '  <script src="/js/femi-store-stable.js"></script>\n</body>');
+
+  fs.writeFileSync(file, html);
+  console.log("Restored stable header/footer on:", path.relative(publicDir, file));
+}
+
+console.log("Header and footer restored safely.");
