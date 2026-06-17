@@ -8,9 +8,14 @@
     "id": "c0b2094f-e853-43b6-be7c-6bc9830f0ed8",
     "price": 1350,
     "stockPrice": 0,
-    "stock": 100,
+    "stock": 0,
     "active": true,
-    "createdAt": "2026-05-29T14:16:43.234580Z"
+    "createdAt": "2026-05-29T14:16:43.234580Z",
+    "quantity": 0,
+    "inStock": false,
+    "available": false,
+    "status": "out_of_stock",
+    "badge": "Out of Stock"
   },
   {
     "name": "FemiFresh Anti-Chafe Balm",
@@ -60,14 +65,18 @@
     "id": "femifresh-starter-business-pack-full-stock",
     "price": 1350,
     "stockPrice": 0,
-    "stock": 100,
+    "stock": 0,
     "active": true,
     "createdAt": "2026-05-29T14:16:43.234580Z",
     "title": "FemiFresh Starter Business Pack - Full Stock",
     "packType": "full_stock",
     "packQuantity": 10,
-    "quantity": 10,
-    "units": 10
+    "quantity": 0,
+    "units": 10,
+    "inStock": false,
+    "available": false,
+    "status": "out_of_stock",
+    "badge": "Out of Stock"
   },
   {
     "name": "FemiFresh Starter Business Pack - Half Stock",
@@ -78,14 +87,18 @@
     "id": "femifresh-starter-business-pack-half-stock",
     "price": 675,
     "stockPrice": 0,
-    "stock": 100,
+    "stock": 0,
     "active": true,
     "createdAt": "2026-05-29T14:16:43.234580Z",
     "title": "FemiFresh Starter Business Pack - Half Stock",
     "packType": "half_stock",
     "packQuantity": 5,
-    "quantity": 5,
-    "units": 5
+    "quantity": 0,
+    "units": 5,
+    "inStock": false,
+    "available": false,
+    "status": "out_of_stock",
+    "badge": "Out of Stock"
   },
   {
     "name": "FemiFresh Anti-Chafe Balm - Full Stock",
