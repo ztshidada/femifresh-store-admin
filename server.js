@@ -2274,4 +2274,50 @@ app.post("/api/admin/manual-joining-unapprove", femiAdminCookieRequired, (req, r
   });
 });
 
+
+
+// FEMIFRESH_AFFILIATE_REAL_STATUS_V1
+app.get("/api/affiliate/real-status", (req, res) => {
+  const email = String(req.query.email || "").trim().toLowerCase();
+  const id = String(req.query.id || "").trim();
+
+  if (!email && !id) {
+    return res.status(400).json({
+      success: false,
+      message: "Affiliate email or id required."
+    });
+  }
+
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a =>
+    (email && String(a.email || "").toLowerCase() === email) ||
+    (id && String(a.id || "") === id)
+  );
+
+  if (!affiliate) {
+    return res.status(404).json({
+      success: false,
+      message: "Affiliate not found."
+    });
+  }
+
+  const paid = !!(
+    affiliate.joiningFeePaid ||
+    affiliate.manualJoiningFeePaid ||
+    affiliate.joiningFeeStatus === "paid" ||
+    affiliate.paymentStatus === "paid" ||
+    affiliate.approved === true ||
+    affiliate.isApproved === true ||
+    affiliate.status === "approved" ||
+    affiliate.accountStatus === "approved"
+  );
+
+  res.json({
+    success: true,
+    paid,
+    approved: paid,
+    affiliate
+  });
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

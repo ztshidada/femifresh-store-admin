@@ -1,4 +1,72 @@
+const fs = require("fs");
+const path = require("path");
 
+const serverFile = path.join(__dirname, "server.js");
+const gateFile = path.join(__dirname, "public", "js", "affiliate-dashboard-gate.js");
+
+/* 1. Add a clean affiliate status API so dashboard checks real database approval */
+let server = fs.readFileSync(serverFile, "utf8");
+
+if (!server.includes("FEMIFRESH_AFFILIATE_REAL_STATUS_V1")) {
+  const api = `
+
+// FEMIFRESH_AFFILIATE_REAL_STATUS_V1
+app.get("/api/affiliate/real-status", (req, res) => {
+  const email = String(req.query.email || "").trim().toLowerCase();
+  const id = String(req.query.id || "").trim();
+
+  if (!email && !id) {
+    return res.status(400).json({
+      success: false,
+      message: "Affiliate email or id required."
+    });
+  }
+
+  const affiliates = read("affiliates", []);
+  const affiliate = affiliates.find(a =>
+    (email && String(a.email || "").toLowerCase() === email) ||
+    (id && String(a.id || "") === id)
+  );
+
+  if (!affiliate) {
+    return res.status(404).json({
+      success: false,
+      message: "Affiliate not found."
+    });
+  }
+
+  const paid = !!(
+    affiliate.joiningFeePaid ||
+    affiliate.manualJoiningFeePaid ||
+    affiliate.joiningFeeStatus === "paid" ||
+    affiliate.paymentStatus === "paid" ||
+    affiliate.approved === true ||
+    affiliate.isApproved === true ||
+    affiliate.status === "approved" ||
+    affiliate.accountStatus === "approved"
+  );
+
+  res.json({
+    success: true,
+    paid,
+    approved: paid,
+    affiliate
+  });
+});
+`;
+
+  const idx = server.lastIndexOf("app.listen(");
+  if (idx === -1) throw new Error("Could not find app.listen in server.js");
+
+  server = server.slice(0, idx) + api + "\n" + server.slice(idx);
+  fs.writeFileSync(serverFile, server);
+  console.log("Added real affiliate status API.");
+} else {
+  console.log("Real affiliate status API already exists.");
+}
+
+/* 2. Replace dashboard gate so approved affiliates see normal dashboard */
+fs.writeFileSync(gateFile, `
 (async function(){
   const BANK = {
     amount: 100,
@@ -128,7 +196,7 @@
   }
 
   function row(label, val){
-    return `
+    return \`
       <div style="
         display:flex;
         justify-content:space-between;
@@ -136,10 +204,10 @@
         padding:12px 0;
         border-bottom:1px solid rgba(104,35,95,.12);
       ">
-        <span style="color:#6f6372;font-weight:800;">${label}</span>
-        <strong style="color:#35112f;text-align:right;">${val}</strong>
+        <span style="color:#6f6372;font-weight:800;">\${label}</span>
+        <strong style="color:#35112f;text-align:right;">\${val}</strong>
       </div>
-    `;
+    \`;
   }
 
   function buildLockedScreen(a){
@@ -149,7 +217,7 @@
     const accountHolder = value(settings.accountHolder, BANK.accountName);
     const accountNumber = value(settings.accountNumber, BANK.accountNumber);
 
-    document.body.innerHTML = `
+    document.body.innerHTML = \`
       <main style="
         min-height:100vh;
         padding:34px 16px;
@@ -192,7 +260,7 @@
           </h1>
 
           <p style="font-size:18px;line-height:1.65;color:#6f6372;margin:0 0 22px;">
-            Hi <strong>${name}</strong>, your account has been created. Your dashboard will unlock after admin confirms your joining fee payment.
+            Hi <strong>\${name}</strong>, your account has been created. Your dashboard will unlock after admin confirms your joining fee payment.
           </p>
 
           <div style="
@@ -206,13 +274,13 @@
               Manual joining fee payment
             </h2>
 
-            ${row("Amount", "R" + amount)}
-            ${row("Bank", bankName)}
-            ${row("Account Name", accountHolder)}
-            ${row("Account Type", BANK.accountType)}
-            ${row("Account Number", accountNumber)}
-            ${row("POP WhatsApp", BANK.whatsapp)}
-            ${row("Reference", "Your registered affiliate email")}
+            \${row("Amount", "R" + amount)}
+            \${row("Bank", bankName)}
+            \${row("Account Name", accountHolder)}
+            \${row("Account Type", BANK.accountType)}
+            \${row("Account Number", accountNumber)}
+            \${row("POP WhatsApp", BANK.whatsapp)}
+            \${row("Reference", "Your registered affiliate email")}
 
             <div style="
               margin-top:18px;
@@ -266,7 +334,7 @@
           </div>
         </section>
       </main>
-    `;
+    \`;
   }
 
   window.logoutAffiliate = function(){
@@ -295,3 +363,6 @@
     }, 500);
   });
 })();
+`);
+
+console.log("Affiliate approval status and name fixed.");
