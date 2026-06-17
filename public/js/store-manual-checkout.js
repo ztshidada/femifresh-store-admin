@@ -16,8 +16,13 @@
       <strong>Manual payment for now</strong><br>
       Online payment is paused while Yoco reviews the website.<br><br>
       ${orderNo ? "<strong>Order number:</strong> " + orderNo + "<br>" : ""}
+      Bank: <strong>FNB</strong><br>
+      Account Name: <strong>Femi Fresh (PTY) LTD</strong><br>
+      Account Type: <strong>FNB Business Account</strong><br>
+      Account Number: <strong>63214749822</strong><br><br>
       Please email proof of payment to:<br>
-      <strong>${MANUAL_EMAIL}</strong><br><br>
+      <strong>${MANUAL_EMAIL}</strong><br>
+      Or send POP to: <strong>0632180372</strong><br><br>
       Use your order number or phone number as reference.
     `;
 

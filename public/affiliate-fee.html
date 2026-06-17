@@ -6,28 +6,110 @@
   <title>Manual Joining Fee | FemiFresh</title>
   <link rel="icon" href="/images/femifresh-logo.jpg">
   <style>
-    body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Inter,system-ui;background:linear-gradient(135deg,#fff8fd,#fff1fa,#fffaf7);color:#241126;padding:24px}
-    .card{width:min(720px,100%);background:#fff;border:1px solid rgba(104,35,95,.14);border-radius:30px;padding:34px;box-shadow:0 22px 60px rgba(104,35,95,.12);text-align:center}
-    img{width:90px;height:90px;object-fit:cover;border-radius:24px;margin-bottom:18px}
-    h1{margin:0 0 12px;color:#35112f;font-size:clamp(36px,6vw,62px);letter-spacing:-.06em}
-    p{color:#6f6372;line-height:1.7;font-size:18px}
-    .amount{font-size:54px;font-weight:950;color:#68235f;margin:12px 0}
-    .email{display:inline-block;padding:14px 18px;border-radius:999px;background:#fff1fa;color:#68235f;font-weight:950;text-decoration:none;margin-top:12px}
-    .back{display:inline-block;margin-top:26px;color:#68235f;font-weight:900}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+      background:linear-gradient(135deg,#fff8fd,#fff1fa,#fffaf7);
+      color:#241126;
+      padding:24px;
+    }
+    .card{
+      width:min(760px,100%);
+      background:#fff;
+      border:1px solid rgba(104,35,95,.14);
+      border-radius:30px;
+      padding:34px;
+      box-shadow:0 22px 60px rgba(104,35,95,.12);
+    }
+    img{
+      width:90px;
+      height:90px;
+      object-fit:cover;
+      border-radius:24px;
+      margin-bottom:18px;
+    }
+    h1{
+      margin:0 0 12px;
+      color:#35112f;
+      font-size:clamp(36px,6vw,62px);
+      letter-spacing:-.06em;
+    }
+    p{
+      color:#6f6372;
+      line-height:1.7;
+      font-size:18px;
+    }
+    .amount{
+      font-size:54px;
+      font-weight:950;
+      color:#68235f;
+      margin:12px 0;
+    }
+    .details{
+      background:#fff1fa;
+      border:1px solid rgba(104,35,95,.14);
+      border-radius:22px;
+      padding:20px;
+      margin:20px 0;
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      border-bottom:1px solid rgba(104,35,95,.12);
+      padding:12px 0;
+      font-size:17px;
+    }
+    .row:last-child{border-bottom:0}
+    .row span:first-child{color:#6f6372;font-weight:800}
+    .row span:last-child{color:#35112f;font-weight:950;text-align:right}
+    .btn{
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      min-height:50px;
+      padding:13px 18px;
+      border-radius:999px;
+      background:#68235f;
+      color:white;
+      font-weight:950;
+      text-decoration:none;
+      margin-top:12px;
+    }
+    @media(max-width:600px){
+      .card{padding:24px}
+      .row{display:block}
+      .row span:last-child{display:block;text-align:left;margin-top:4px}
+    }
   </style>
-  <link rel="stylesheet" href="/css/femifresh-mobile-system.css">
 </head>
 <body>
   <main class="card">
     <img src="/images/femifresh-logo.jpg" alt="FemiFresh">
     <h1>Manual Joining Fee</h1>
     <div class="amount">R100</div>
-    <p>Online payment for the affiliate joining fee is paused while the payment provider review is pending.</p>
-    <p>Please pay manually and email proof of payment. Use your registered affiliate email as reference.</p>
-    <a class="email" href="mailto:femifresh02@gmail.com">femifresh02@gmail.com</a>
-    <br>
-    <a class="back" href="https://affiliates.femifresh.co.za/login">Back to Affiliate Login</a>
+
+    <p>Online payment is paused while Yoco is reviewing the website. Please pay manually using the banking details below.</p>
+
+    <div class="details">
+      <div class="row"><span>Bank</span><span>FNB</span></div>
+      <div class="row"><span>Account Name</span><span>Femi Fresh (PTY) LTD</span></div>
+      <div class="row"><span>Account Type</span><span>FNB Business Account</span></div>
+      <div class="row"><span>Account Number</span><span>63214749822</span></div>
+      <div class="row"><span>Amount</span><span>R100</span></div>
+      <div class="row"><span>Reference</span><span>Your registered affiliate email</span></div>
+    </div>
+
+    <p>
+      After payment, email your proof of payment to <strong>femifresh02@gmail.com</strong>
+      or send POP to <strong>0632180372</strong>.
+    </p>
+
+    <a class="btn" href="mailto:femifresh02@gmail.com">Email Proof of Payment</a>
+    <a class="btn" style="background:white;color:#68235f;border:1px solid rgba(104,35,95,.14);margin-left:8px;" href="https://affiliates.femifresh.co.za/login">Back to Login</a>
   </main>
-  <script src="/js/femifresh-mobile-system.js"></script>
 </body>
 </html>
