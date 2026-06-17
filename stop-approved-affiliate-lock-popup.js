@@ -1,4 +1,10 @@
+const fs = require("fs");
+const path = require("path");
 
+const gateFile = path.join(__dirname, "public", "js", "affiliate-dashboard-gate.js");
+const dashboardFile = path.join(__dirname, "public", "affiliate-dashboard.html");
+
+fs.writeFileSync(gateFile, `
 (async function(){
   const VERSION = "NO_FALSE_LOCK_3800";
 
@@ -147,7 +153,7 @@
   }
 
   function row(label, val){
-    return `
+    return \`
       <div style="
         display:flex;
         justify-content:space-between;
@@ -155,16 +161,16 @@
         padding:12px 0;
         border-bottom:1px solid rgba(104,35,95,.12);
       ">
-        <span style="color:#6f6372;font-weight:800;">${label}</span>
-        <strong style="color:#35112f;text-align:right;">${val}</strong>
+        <span style="color:#6f6372;font-weight:800;">\${label}</span>
+        <strong style="color:#35112f;text-align:right;">\${val}</strong>
       </div>
-    `;
+    \`;
   }
 
   function buildLockedScreen(a){
     const name = affiliateName(a);
 
-    document.body.innerHTML = `
+    document.body.innerHTML = \`
       <main style="
         min-height:100vh;
         padding:34px 16px;
@@ -207,7 +213,7 @@
           </h1>
 
           <p style="font-size:18px;line-height:1.65;color:#6f6372;margin:0 0 22px;">
-            Hi <strong>${name}</strong>, your account has been created. Your dashboard will unlock after admin confirms your joining fee payment.
+            Hi <strong>\${name}</strong>, your account has been created. Your dashboard will unlock after admin confirms your joining fee payment.
           </p>
 
           <div style="
@@ -221,13 +227,13 @@
               Manual joining fee payment
             </h2>
 
-            ${row("Amount", "R100")}
-            ${row("Bank", BANK.bank)}
-            ${row("Account Name", BANK.accountName)}
-            ${row("Account Type", BANK.accountType)}
-            ${row("Account Number", BANK.accountNumber)}
-            ${row("POP WhatsApp", BANK.whatsapp)}
-            ${row("Reference", "Your registered affiliate email")}
+            \${row("Amount", "R100")}
+            \${row("Bank", BANK.bank)}
+            \${row("Account Name", BANK.accountName)}
+            \${row("Account Type", BANK.accountType)}
+            \${row("Account Number", BANK.accountNumber)}
+            \${row("POP WhatsApp", BANK.whatsapp)}
+            \${row("Reference", "Your registered affiliate email")}
 
             <div style="
               margin-top:18px;
@@ -281,7 +287,7 @@
           </div>
         </section>
       </main>
-    `;
+    \`;
   }
 
   window.logoutAffiliate = function(){
@@ -347,3 +353,16 @@
     boot();
   }
 })();
+`);
+
+if (fs.existsSync(dashboardFile)) {
+  let html = fs.readFileSync(dashboardFile, "utf8");
+
+  html = html.replace(/<script[^>]+affiliate-dashboard-gate\.js[^>]*><\/script>\s*/gi, "");
+
+  html = html.replace("</head>", '  <script src="/js/affiliate-dashboard-gate.js?v=3800"></script>\n</head>');
+
+  fs.writeFileSync(dashboardFile, html);
+}
+
+console.log("Approved affiliates will no longer be locked after dashboard loads.");
