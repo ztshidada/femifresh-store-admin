@@ -2320,4 +2320,68 @@ app.get("/api/affiliate/real-status", (req, res) => {
   });
 });
 
+
+
+// CLEAN_DUPLICATE_STARTER_BUSINESS_PACK_V1
+async function cleanDuplicateStarterBusinessPackOnce() {
+  try {
+    if (global.ensureFemiDbReady) await global.ensureFemiDbReady();
+
+    if (typeof read !== "function" || typeof write !== "function") return;
+
+    let products = read("products", []);
+    if (!Array.isArray(products)) return;
+
+    const before = products.length;
+
+    products = products.filter(p => {
+      const name = String(p.name || p.title || "").toLowerCase().trim();
+      const id = String(p.id || "").toLowerCase().trim();
+
+      return !(
+        name === "femifresh starter business pack" ||
+        id === "c0b2094f-e853-43b6-be7c-6bc9830f0ed8"
+      );
+    });
+
+    products = products.map(p => {
+      const text = [
+        p.name,
+        p.title,
+        p.category,
+        p.description,
+        p.id,
+        p.image,
+        p.imageUrl
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      if (
+        text.includes("starter business pack") ||
+        text.includes("starter-business-pack")
+      ) {
+        return {
+          ...p,
+          stock: 0,
+          quantity: 0,
+          inStock: false,
+          available: false,
+          status: "out_of_stock",
+          badge: "Out of Stock"
+        };
+      }
+
+      return p;
+    });
+
+    if (products.length !== before || products.some(p => String(p.status || "").includes("out_of_stock"))) {
+      write("products", products);
+      console.log("Cleaned duplicate starter business pack. Before:", before, "After:", products.length);
+    }
+  } catch (e) {
+    console.error("Could not clean duplicate starter business pack:", e.message);
+  }
+}
+
+setTimeout(cleanDuplicateStarterBusinessPackOnce, 3000);
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

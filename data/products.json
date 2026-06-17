@@ -1,23 +1,5 @@
 [
   {
-    "name": "FemiFresh Starter Business Pack",
-    "slug": "femifresh-starter-business-pack",
-    "category": "Business Pack",
-    "description": "Start your FemiFresh business with a starter pack. Includes 5 feminine washes for now.",
-    "image": "/images/products/starter-business-pack.jpeg",
-    "id": "c0b2094f-e853-43b6-be7c-6bc9830f0ed8",
-    "price": 1350,
-    "stockPrice": 0,
-    "stock": 0,
-    "active": true,
-    "createdAt": "2026-05-29T14:16:43.234580Z",
-    "quantity": 0,
-    "inStock": false,
-    "available": false,
-    "status": "out_of_stock",
-    "badge": "Out of Stock"
-  },
-  {
     "name": "FemiFresh Anti-Chafe Balm",
     "slug": "femifresh-anti-chafe-balm",
     "category": "Body Care",
