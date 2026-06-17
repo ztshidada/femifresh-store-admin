@@ -235,7 +235,7 @@ async function submitOrder(e) {
   cart.clear();
 
   if (res.payment === "placeholder") {
-    alert("Order created, but Yoco is not fully connected yet. Check Render YOCO_SECRET_KEY.");
+    alert("Order created, but online payment is not fully connected yet. Check Render online payment_SECRET_KEY.");
   }
 
   location.href = res.checkoutUrl;
@@ -478,7 +478,7 @@ submitOrder = async function(e) {
   cart.clear();
 
   if (res.payment === "placeholder") {
-    alert("Order created, but Yoco is not fully connected yet. Check Render YOCO_SECRET_KEY.");
+    alert("Order created, but online payment is not fully connected yet. Check Render online payment_SECRET_KEY.");
   }
 
   location.href = res.checkoutUrl;

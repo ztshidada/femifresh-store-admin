@@ -232,7 +232,7 @@ function changeSponsor() {
 }
 
 function blockPayout() {
-  const reason = prompt("Reason for blocking payout:", "Account under review");
+  const reason = prompt("Reason for blocking payout:", "Account manual payment active");
   if (!reason) return;
 
   postAction("/api/aff-admin/affiliates/" + id + "/block-payout", { reason });

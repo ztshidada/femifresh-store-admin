@@ -1,7 +1,7 @@
 
 (function(){
   const MANUAL_EMAIL = "femifresh02@gmail.com";
-  const MESSAGE = "Online payment is paused while Yoco reviews femifresh.co.za. Your order can still be placed. Send POP to WhatsApp 0632180372 with your order number. Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days.";
+  const MESSAGE = "Manual payment is currently available. Place your order and send proof of payment to WhatsApp 0632180372. Please make immediate payment. If payment is delayed, your approval process may take up to 7 working days.";
 
   function showManualBox(order){
     if (document.getElementById("ffManualStorePaymentBox")) return;
@@ -14,7 +14,7 @@
 
     box.innerHTML = `
       <strong>Manual payment for now</strong><br>
-      Online payment is paused while Yoco reviews the website.<br><br>
+      Manual payment is currently available.<br><br>
       ${orderNo ? "<strong>Order number:</strong> " + orderNo + "<br>" : ""}
       Bank: <strong>FNB</strong><br>
       Account Name: <strong>Femi Fresh (PTY) LTD</strong><br>
@@ -35,10 +35,10 @@
     paymentSection.prepend(box);
   }
 
-  function removeYocoText(){
+  function removeonline paymentText(){
     document.querySelectorAll("*").forEach(el => {
-      if (!el.children.length && el.textContent && el.textContent.includes("Yoco payment will be connected")) {
-        el.textContent = "Online payment is paused while Yoco reviews the website. Place your order and send POP to WhatsApp 0632180372.";
+      if (!el.children.length && el.textContent && el.textContent.includes("online payment payment will be connected")) {
+        el.textContent = "Manual payment is currently available. Place your order and send proof of payment to WhatsApp 0632180372.";
       }
     });
   }
@@ -58,12 +58,12 @@
         if (data && typeof data === "object") {
           const order = data.order || data.data || data;
 
-          if (data.checkoutUrl || data.paymentUrl || data.yocoUrl || data.redirectUrl) {
+          if (data.checkoutUrl || data.paymentUrl || data.online paymentUrl || data.redirectUrl) {
             const cleaned = {
               ...data,
               checkoutUrl: null,
               paymentUrl: null,
-              yocoUrl: null,
+              online paymentUrl: null,
               redirectUrl: null,
               paymentMode: "manual",
               paymentStatus: "pending",
@@ -93,7 +93,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", function(){
-    removeYocoText();
+    removeonline paymentText();
 
     const paymentArea =
       document.querySelector("#payment") ||

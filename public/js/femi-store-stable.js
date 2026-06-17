@@ -187,7 +187,7 @@
             checkoutUrl: thankUrl,
             paymentUrl: thankUrl,
             redirectUrl: thankUrl,
-            yocoUrl: null,
+            online paymentUrl: null,
             paymentMode:"manual",
             paymentStatus:"pending",
             manualPayment:{

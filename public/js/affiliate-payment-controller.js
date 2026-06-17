@@ -9,7 +9,7 @@
         .then(d => d.settings || {})
         .catch(() => ({
           manualAffiliateJoiningFeeEnabled: true,
-          yocoAffiliateJoiningFeeEnabled: false,
+          online paymentAffiliateJoiningFeeEnabled: false,
           manualPaymentButtonEnabled: true,
           joiningFeeAmount: 100,
           manualPaymentEmail: "femifresh02@gmail.com",
@@ -65,7 +65,7 @@
       if (url.includes("affiliate") || url.includes("register") || url.includes("join")) {
         const s = await getSettings();
 
-        if (s.yocoAffiliateJoiningFeeEnabled) {
+        if (s.online paymentAffiliateJoiningFeeEnabled) {
           return res;
         }
 
@@ -78,7 +78,7 @@
               ...data,
               checkoutUrl: null,
               paymentUrl: null,
-              yocoUrl: null,
+              online paymentUrl: null,
               redirectUrl: null,
               paymentMode: "manual",
               manualPayment: {
@@ -111,7 +111,7 @@
       const text = (el.textContent || "").toLowerCase();
       const href = (el.getAttribute && (el.getAttribute("href") || "")).toLowerCase();
 
-      if (!s.yocoAffiliateJoiningFeeEnabled && (href.includes("yoco") || text.includes("pay r100"))) {
+      if (!s.online paymentAffiliateJoiningFeeEnabled && (href.includes("online payment") || text.includes("pay r100"))) {
         el.remove();
       }
     });

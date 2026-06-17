@@ -6,7 +6,7 @@
     paymentTitle: "Manual joining fee payment",
     paymentInstructions: "Pay the once-off R100 joining fee manually and email proof to femifresh02@gmail.com. Use your registered affiliate email as reference.",
     referenceInstruction: "Use your registered affiliate email as reference.",
-    yocoAffiliateJoiningFeeEnabled: false,
+    online paymentAffiliateJoiningFeeEnabled: false,
     manualAffiliateJoiningFeeEnabled: true
   };
 

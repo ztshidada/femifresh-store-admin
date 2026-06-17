@@ -65,7 +65,7 @@
       <p>Control how affiliates pay the once-off R100 joining fee.</p>
 
       <div class="notice">
-        Recommended while Yoco is reviewing the affiliate subdomain: keep <strong>Manual Payment ON</strong> and <strong>Yoco Payment OFF</strong>.
+        Recommended while online payment is reviewing the affiliate subdomain: keep <strong>Manual Payment ON</strong> and <strong>online payment Payment OFF</strong>.
       </div>
 
       <section class="card">
@@ -83,7 +83,7 @@
         <div class="row">
           <div>
             <label>Manual R100 joining fee enabled</label>
-            <small>If ON, affiliate registration will show manual payment instructions instead of redirecting to Yoco.</small>
+            <small>If ON, affiliate registration will show manual payment instructions instead of redirecting to online payment.</small>
           </div>
           <label class="switch">
             <input type="checkbox" id="manualAffiliateJoiningFeeEnabled">
@@ -93,11 +93,11 @@
 
         <div class="row">
           <div>
-            <label>Yoco online payment enabled</label>
-            <small>If ON, affiliate registration can continue to the Yoco payment flow.</small>
+            <label>online payment online payment enabled</label>
+            <small>If ON, affiliate registration can continue to the online payment payment flow.</small>
           </div>
           <label class="switch">
-            <input type="checkbox" id="yocoAffiliateJoiningFeeEnabled">
+            <input type="checkbox" id="online paymentAffiliateJoiningFeeEnabled">
             <span class="slider"></span>
           </label>
         </div>
@@ -147,7 +147,7 @@ async function loadSettings() {
 
   manualPaymentButtonEnabled.checked = !!s.manualPaymentButtonEnabled;
   manualAffiliateJoiningFeeEnabled.checked = !!s.manualAffiliateJoiningFeeEnabled;
-  yocoAffiliateJoiningFeeEnabled.checked = !!s.yocoAffiliateJoiningFeeEnabled;
+  online paymentAffiliateJoiningFeeEnabled.checked = !!s.online paymentAffiliateJoiningFeeEnabled;
   joiningFeeAmount.value = s.joiningFeeAmount || 100;
   manualPaymentEmail.value = s.manualPaymentEmail || "femifresh02@gmail.com";
   manualPaymentInstruction.value = s.manualPaymentInstruction || "";
@@ -157,7 +157,7 @@ async function saveSettings() {
   const body = {
     manualPaymentButtonEnabled: manualPaymentButtonEnabled.checked,
     manualAffiliateJoiningFeeEnabled: manualAffiliateJoiningFeeEnabled.checked,
-    yocoAffiliateJoiningFeeEnabled: yocoAffiliateJoiningFeeEnabled.checked,
+    online paymentAffiliateJoiningFeeEnabled: online paymentAffiliateJoiningFeeEnabled.checked,
     joiningFeeAmount: Number(joiningFeeAmount.value || 100),
     manualPaymentEmail: manualPaymentEmail.value,
     manualPaymentInstruction: manualPaymentInstruction.value
