@@ -1,41 +1,13 @@
 
-(async function(){
-  let settings = {
-    joiningFeeAmount: 100,
-    popEmail: "femifresh02@gmail.com",
-    paymentTitle: "Manual joining fee payment",
-    paymentInstructions: "Pay the once-off R100 joining fee manually and email proof to femifresh02@gmail.com. Use your registered affiliate email as reference.",
-    referenceInstruction: "Use your registered affiliate email as reference.",
-    online paymentAffiliateJoiningFeeEnabled: false,
-    manualAffiliateJoiningFeeEnabled: true
-  };
-
-  async function loadSettings(){
-    try{
-      const res = await fetch("/api/manual-joining-settings", {cache:"no-store"});
-      const data = await res.json();
-      settings = {...settings, ...(data.settings || {})};
-    }catch(e){}
-  }
-
-  function renderManualBox(){
-    const title = document.getElementById("manualTitle");
-    const box = document.getElementById("manualBox");
-    if(!box) return;
-
-    if(title) title.textContent = settings.paymentTitle || "Manual joining fee payment";
-
-    box.innerHTML = `
-      <p><strong>Amount:</strong> R${settings.joiningFeeAmount || 100}</p>
-      <p>${settings.paymentInstructions || ""}</p>
-      <p><strong>Email POP to:</strong><br>${settings.popEmail || "femifresh02@gmail.com"}</p>
-      ${settings.bankName ? `<p><strong>Bank:</strong> ${settings.bankName}</p>` : ""}
-      ${settings.accountHolder ? `<p><strong>Account holder:</strong> ${settings.accountHolder}</p>` : ""}
-      ${settings.accountNumber ? `<p><strong>Account number:</strong> ${settings.accountNumber}</p>` : ""}
-      ${settings.branchCode ? `<p><strong>Branch code:</strong> ${settings.branchCode}</p>` : ""}
-      <p><strong>Reference:</strong><br>${settings.referenceInstruction || "Use your registered affiliate email as reference."}</p>
-    `;
-  }
+(function(){
+  const REGISTER_ENDPOINTS = [
+    "/api/affiliate/register",
+    "/api/affiliates/register",
+    "/api/affiliate/signup",
+    "/api/affiliates/signup",
+    "/api/join",
+    "/api/register"
+  ];
 
   function saveLoginData(data){
     const token = data.token || data.accessToken || data.affiliateToken || data.jwt || "";
@@ -51,23 +23,39 @@
     }
   }
 
-  async function postSignup(payload){
-    const endpoint = window.FF_REGISTER_ENDPOINT || "/api/affiliate/register";
+  async function tryRegister(payload){
+    let lastError = "Could not create account.";
 
-    const res = await fetch(endpoint, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      credentials:"include",
-      body:JSON.stringify(payload)
-    });
+    for (const endpoint of REGISTER_ENDPOINTS) {
+      try {
+        const res = await fetch(endpoint, {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          credentials:"include",
+          body:JSON.stringify(payload)
+        });
 
-    const data = await res.json().catch(()=>({success:false,message:"Bad server response"}));
-    return data;
+        const data = await res.json().catch(() => null);
+
+        if (res.ok && data && (data.success || data.affiliate || data.token)) {
+          return data;
+        }
+
+        if (data && data.message) lastError = data.message;
+      } catch(e) {}
+    }
+
+    return {success:false,message:lastError};
   }
 
-  document.addEventListener("DOMContentLoaded", async function(){
-    await loadSettings();
-    renderManualBox();
+  function cleanUrl(){
+    if (location.search && /password=|email=|phone=|firstName=|lastName=/i.test(location.search)) {
+      history.replaceState({}, document.title, location.pathname);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    cleanUrl();
 
     const form = document.getElementById("signupForm");
     if(!form) return;
@@ -76,30 +64,35 @@
       e.preventDefault();
 
       const fd = new FormData(form);
+
       const payload = {
-        firstName: fd.get("firstName"),
-        lastName: fd.get("lastName"),
-        name: (fd.get("firstName") + " " + fd.get("lastName")).trim(),
-        phone: fd.get("phone"),
-        email: fd.get("email"),
-        password: fd.get("password"),
-        sponsorCode: fd.get("sponsorCode") || "",
-        referralCode: fd.get("sponsorCode") || ""
+        firstName: String(fd.get("firstName") || "").trim(),
+        lastName: String(fd.get("lastName") || "").trim(),
+        name: (String(fd.get("firstName") || "").trim() + " " + String(fd.get("lastName") || "").trim()).trim(),
+        fullName: (String(fd.get("firstName") || "").trim() + " " + String(fd.get("lastName") || "").trim()).trim(),
+        phone: String(fd.get("phone") || "").trim(),
+        email: String(fd.get("email") || "").trim(),
+        password: String(fd.get("password") || ""),
+        sponsorCode: String(fd.get("sponsorCode") || "").trim(),
+        referralCode: String(fd.get("sponsorCode") || "").trim()
       };
 
       const btn = form.querySelector("button");
+      const success = document.getElementById("successBox");
+      const error = document.getElementById("errorBox");
+
+      success.style.display = "none";
+      error.style.display = "none";
+
       btn.disabled = true;
       btn.textContent = "Creating account...";
 
-      const data = await postSignup(payload);
+      const data = await tryRegister(payload);
 
       btn.disabled = false;
       btn.textContent = "Sign Up";
 
-      const success = document.getElementById("successBox");
-      const error = document.getElementById("errorBox");
-
-      if(!data.success && !data.affiliate){
+      if(!data.success && !data.affiliate && !data.token){
         error.style.display = "block";
         error.textContent = data.message || "Could not create account.";
         return;
@@ -108,14 +101,13 @@
       saveLoginData(data);
 
       success.style.display = "block";
-      success.innerHTML =
-        "<strong>Account created.</strong><br>Your dashboard will open now. Functions will stay locked until admin approves your R" +
-        (settings.joiningFeeAmount || 100) +
-        " joining fee payment.";
+      success.innerHTML = "<strong>Account created.</strong><br>Your dashboard will open now. It will unlock after admin approves your joining fee payment.";
+
+      form.reset();
 
       setTimeout(() => {
         location.href = "/dashboard?manualPayment=pending";
-      }, 1300);
+      }, 1200);
     });
   });
 })();
