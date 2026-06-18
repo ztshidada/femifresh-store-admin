@@ -2434,4 +2434,304 @@ async function cleanBaseProductDuplicatesOnce() {
 
 setTimeout(cleanBaseProductDuplicatesOnce, 3500);
 
+
+
+// FEMIFRESH_LIMITED_STAFF_ADMIN_V1
+const cryptoStaffAdmin = require("crypto");
+
+function staffCookieParse(req) {
+  const header = req.headers.cookie || "";
+  return Object.fromEntries(
+    header.split(";").map(v => {
+      const i = v.indexOf("=");
+      if (i === -1) return ["", ""];
+      return [v.slice(0, i).trim(), decodeURIComponent(v.slice(i + 1).trim())];
+    }).filter(v => v[0])
+  );
+}
+
+function staffSecret() {
+  return process.env.STAFF_ADMIN_SECRET || process.env.JWT_SECRET || "femifresh-staff-secret-change-me";
+}
+
+function staffSign(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = cryptoStaffAdmin
+    .createHmac("sha256", staffSecret())
+    .update(body)
+    .digest("base64url");
+
+  return body + "." + sig;
+}
+
+function staffVerify(token) {
+  try {
+    const [body, sig] = String(token || "").split(".");
+    if (!body || !sig) return null;
+
+    const expected = cryptoStaffAdmin
+      .createHmac("sha256", staffSecret())
+      .update(body)
+      .digest("base64url");
+
+    if (sig !== expected) return null;
+
+    const data = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+
+    if (!data.exp || Date.now() > data.exp) return null;
+
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function staffAuth(req, res, next) {
+  const cookies = staffCookieParse(req);
+  const staff = staffVerify(cookies.ff_staff_token);
+
+  if (!staff) {
+    return res.status(401).json({
+      success: false,
+      message: "Staff admin login required."
+    });
+  }
+
+  req.staffAdmin = staff;
+  next();
+}
+
+function getStaffLogin() {
+  return {
+    email: process.env.STAFF_ADMIN_EMAIL || "orders@femifresh.local",
+    password: process.env.STAFF_ADMIN_PASSWORD || "Orders@12345"
+  };
+}
+
+function orderIdMatches(order, id) {
+  const keys = [
+    order.id,
+    order.orderId,
+    order.orderNumber,
+    order.orderNo,
+    order.reference
+  ].filter(Boolean).map(String);
+
+  return keys.includes(String(id));
+}
+
+function orderNumber(order, index) {
+  const raw =
+    order.orderNumber ||
+    order.orderNo ||
+    order.reference ||
+    order.id ||
+    index + 1;
+
+  const s = String(raw);
+
+  if (s.startsWith("FF-")) return s;
+
+  const digits = s.match(/\d+/);
+  if (!digits) return "FF-" + String(10000 + index + 1);
+
+  const n = Number(digits[0]);
+
+  if (n >= 10000) return "FF-" + n;
+
+  return "FF-" + String(10000 + n).padStart(5, "0");
+}
+
+function affiliateJoiningPaid(a) {
+  return !!(
+    a.joiningFeePaid ||
+    a.manualJoiningFeePaid ||
+    a.joiningFeeStatus === "paid" ||
+    a.paymentStatus === "paid" ||
+    a.accountStatus === "approved" ||
+    a.approved === true ||
+    a.isApproved === true
+  );
+}
+
+app.post("/api/staff/login", (req, res) => {
+  const body = req.body || {};
+  const login = getStaffLogin();
+
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
+
+  if (email !== login.email.toLowerCase() || password !== login.password) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid staff admin login."
+    });
+  }
+
+  const token = staffSign({
+    role: "orders_joining_admin",
+    email: login.email,
+    exp: Date.now() + 1000 * 60 * 60 * 12
+  });
+
+  res.cookie("ff_staff_token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 12
+  });
+
+  res.json({
+    success: true,
+    role: "orders_joining_admin"
+  });
+});
+
+app.post("/api/staff/logout", staffAuth, (req, res) => {
+  res.clearCookie("ff_staff_token");
+  res.json({ success: true });
+});
+
+app.get("/api/staff/me", staffAuth, (req, res) => {
+  res.json({
+    success: true,
+    staff: req.staffAdmin
+  });
+});
+
+app.get("/api/staff/orders", staffAuth, (req, res) => {
+  const orders = read("orders", []);
+
+  const clean = orders.map((o, index) => ({
+    ...o,
+    cleanOrderNumber: orderNumber(o, index)
+  })).sort((a, b) => {
+    return new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0);
+  });
+
+  res.json({
+    success: true,
+    orders: clean
+  });
+});
+
+app.post("/api/staff/orders/:id/paid", staffAuth, (req, res) => {
+  const id = req.params.id;
+  const orders = read("orders", []);
+  const index = orders.findIndex(o => orderIdMatches(o, id));
+
+  if (index === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found."
+    });
+  }
+
+  orders[index] = {
+    ...orders[index],
+    paymentStatus: "paid",
+    paid: true,
+    paidAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  write("orders", orders);
+
+  res.json({
+    success: true,
+    order: orders[index]
+  });
+});
+
+app.post("/api/staff/orders/:id/fulfilled", staffAuth, (req, res) => {
+  const id = req.params.id;
+  const orders = read("orders", []);
+  const index = orders.findIndex(o => orderIdMatches(o, id));
+
+  if (index === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found."
+    });
+  }
+
+  orders[index] = {
+    ...orders[index],
+    fulfillmentStatus: "fulfilled",
+    status: orders[index].status === "cancelled" ? "cancelled" : "fulfilled",
+    fulfilled: true,
+    fulfilledAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  write("orders", orders);
+
+  res.json({
+    success: true,
+    order: orders[index]
+  });
+});
+
+app.get("/api/staff/joining-pending", staffAuth, (req, res) => {
+  const affiliates = read("affiliates", []);
+
+  const pending = affiliates
+    .filter(a => !affiliateJoiningPaid(a))
+    .map(a => ({
+      id: a.id,
+      firstName: a.firstName,
+      lastName: a.lastName,
+      fullName: a.fullName || a.name || [a.firstName, a.lastName].filter(Boolean).join(" "),
+      email: a.email,
+      phone: a.phone,
+      referralCode: a.referralCode || a.code,
+      joiningFeeStatus: a.joiningFeeStatus || a.paymentStatus || a.accountStatus || "pending",
+      createdAt: a.createdAt
+    }));
+
+  res.json({
+    success: true,
+    affiliates: pending
+  });
+});
+
+app.post("/api/staff/affiliates/:id/mark-joined", staffAuth, (req, res) => {
+  const id = req.params.id;
+  const affiliates = read("affiliates", []);
+
+  const index = affiliates.findIndex(a =>
+    String(a.id || "") === String(id) ||
+    String(a.email || "").toLowerCase() === String(id).toLowerCase()
+  );
+
+  if (index === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Affiliate not found."
+    });
+  }
+
+  affiliates[index] = {
+    ...affiliates[index],
+    joiningFeePaid: true,
+    manualJoiningFeePaid: true,
+    joiningFeeStatus: "paid",
+    paymentStatus: "paid",
+    accountStatus: "approved",
+    approved: true,
+    isApproved: true,
+    joined: true,
+    joiningFeePaidAt: affiliates[index].joiningFeePaidAt || new Date().toISOString(),
+    approvedAt: affiliates[index].approvedAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  write("affiliates", affiliates);
+
+  res.json({
+    success: true,
+    affiliate: affiliates[index]
+  });
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
