@@ -258,7 +258,7 @@ function orderId(o, i){
 }
 
 async function loadOrders(){
-  const data = await api("/api/staff/orders");
+  const data = await api("/api/admin/limited/orders");
 
   orders = data.orders || data.data || [];
   render();
@@ -317,7 +317,7 @@ function render(){
 async function markPaid(id){
   if(!confirm("Mark this order as paid?")) return;
 
-  const data = await api("/api/staff/orders/" + encodeURIComponent(id) + "/paid", {
+  const data = await api("/api/admin/limited/orders/" + encodeURIComponent(id) + "/paid", {
     method:"POST"
   });
 
@@ -328,7 +328,7 @@ async function markPaid(id){
 async function markFulfilled(id){
   if(!confirm("Mark this order as fulfilled?")) return;
 
-  const data = await api("/api/staff/orders/" + encodeURIComponent(id) + "/fulfilled", {
+  const data = await api("/api/admin/limited/orders/" + encodeURIComponent(id) + "/fulfilled", {
     method:"POST"
   });
 
@@ -343,6 +343,6 @@ async function logout(){
 
 loadOrders();
 </script>
-  <script src="/js/orders-admin-route-fix.js?v=5200"></script>
+    <script src="/js/orders-admin-route-fix.js?v=5300"></script>
 </body>
 </html>

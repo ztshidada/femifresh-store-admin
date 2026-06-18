@@ -1,8 +1,17 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login - FemiFresh Admin</title><link rel="stylesheet" href="/admin/css/admin.css">    <link rel="stylesheet" href="/css/admin-basic-safe.css">
   <link rel="stylesheet" href="/css/femifresh-mobile-system.css">
     <link rel="stylesheet" href="/css/femifresh-admin-premium.css?v=4100">
-</head><body class="login"><div class="card"><div class="brand" style="color:#5b1f58"><img src="/images/femifresh-logo-source.jpg">FemiFresh Admin</div><h1>Admin Login</h1><form class="form" onsubmit="login(event)"><input class="input" name="email" type="email" placeholder="Email" value="admin@femifresh.local" required><input class="input" name="password" type="password" placeholder="Password" value="Admin@12345" required><button class="btn">Login</button></form><p><b></p><p><b></p></div><script src="/admin/js/admin.js"></script><script src="/js/glass-home-refresh.js"></script>
+</head><body class="login"><div class="card"><div class="brand" style="color:#5b1f58"><img src="/images/femifresh-logo-source.jpg">FemiFresh Admin</div><h1>Admin Login</h1><form class="form" onsubmit="login(event)" autocomplete="off"><input class="input" name="email" type="email" autocomplete="new-email" value="" placeholder="Email"  required><input class="input" name="password" type="password" autocomplete="new-password" value="" placeholder="Password"  required><button class="btn">Login</button></form><p><b></p><p><b></p></div><script src="/admin/js/admin.js"></script><script src="/js/glass-home-refresh.js"></script>
   <script src="/js/femifresh-mobile-system.js"></script>
     <script src="/js/orders-admin-hard-lock.js?v=5100"></script>
-  <script src="/js/orders-admin-route-fix.js?v=5200"></script>
+  <script>
+// LOGIN_CLEAR_AUTOFILL_V1
+setTimeout(() => {
+  document.querySelectorAll('input[type="email"], input[type="password"]').forEach(input => {
+    input.value = "";
+    input.setAttribute("autocomplete", input.type === "password" ? "new-password" : "new-email");
+  });
+}, 250);
+</script>
+  <script src="/js/orders-admin-route-fix.js?v=5300"></script>
 </body></html>

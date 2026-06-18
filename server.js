@@ -2828,4 +2828,120 @@ app.post("/api/admin/limited/affiliates/:id/mark-joined", limitedAdminGuard, (re
   res.json({success:true, affiliate:affiliates[index]});
 });
 
+
+
+// LIMITED_ADMIN_ORDERS_NORMAL_SESSION_V1
+function limitedOrdersRoleOk(req) {
+  const user = req.adminUser || req.user || req.admin || {};
+  const role = String(user.role || user.type || "").toLowerCase();
+
+  return (
+    role === "super_admin" ||
+    role === "admin" ||
+    role === "orders_admin" ||
+    role === "staff_admin"
+  );
+}
+
+function limitedOrdersGuard(req, res, next) {
+  if (typeof requireAdmin === "function") {
+    return requireAdmin(req, res, function(){
+      if (!limitedOrdersRoleOk(req)) {
+        return res.status(403).json({success:false,message:"Not allowed."});
+      }
+      next();
+    });
+  }
+
+  next();
+}
+
+function limitedOrderMatches(order, id) {
+  const keys = [
+    order.id,
+    order.orderId,
+    order.orderNumber,
+    order.orderNo,
+    order.reference
+  ].filter(Boolean).map(String);
+
+  return keys.includes(String(id));
+}
+
+function limitedCleanOrderNo(order, index) {
+  const raw = order.orderNumber || order.orderNo || order.reference || order.id || index + 1;
+  const s = String(raw);
+
+  if (s.startsWith("FF-")) return s;
+
+  const digits = s.match(/\d+/);
+  if (!digits) return "FF-" + String(10000 + index + 1);
+
+  const n = Number(digits[0]);
+  if (n >= 10000) return "FF-" + n;
+
+  return "FF-" + String(10000 + n).padStart(5, "0");
+}
+
+app.get("/api/admin/limited/orders", limitedOrdersGuard, (req, res) => {
+  const orders = read("orders", []);
+
+  const clean = orders.map((o, index) => ({
+    ...o,
+    cleanOrderNumber: limitedCleanOrderNo(o, index)
+  })).sort((a, b) => {
+    return new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0);
+  });
+
+  res.json({
+    success:true,
+    orders:clean
+  });
+});
+
+app.post("/api/admin/limited/orders/:id/paid", limitedOrdersGuard, (req, res) => {
+  const id = req.params.id;
+  const orders = read("orders", []);
+  const index = orders.findIndex(o => limitedOrderMatches(o, id));
+
+  if (index === -1) {
+    return res.status(404).json({success:false,message:"Order not found."});
+  }
+
+  orders[index] = {
+    ...orders[index],
+    paymentStatus:"paid",
+    paid:true,
+    paidAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+
+  write("orders", orders);
+
+  res.json({success:true, order:orders[index]});
+});
+
+app.post("/api/admin/limited/orders/:id/fulfilled", limitedOrdersGuard, (req, res) => {
+  const id = req.params.id;
+  const orders = read("orders", []);
+  const index = orders.findIndex(o => limitedOrderMatches(o, id));
+
+  if (index === -1) {
+    return res.status(404).json({success:false,message:"Order not found."});
+  }
+
+  orders[index] = {
+    ...orders[index],
+    fulfillmentStatus:"fulfilled",
+    status: orders[index].status === "cancelled" ? "cancelled" : "fulfilled",
+    fulfilled:true,
+    fulfilledAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+
+  write("orders", orders);
+
+  res.json({success:true, order:orders[index]});
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));

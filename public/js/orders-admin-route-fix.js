@@ -1,8 +1,12 @@
 
 (function(){
+  function text(){
+    return (document.body.innerText || "").toLowerCase();
+  }
+
   function isOrdersAdmin(){
-    return (document.body.innerText || "").toLowerCase().includes("orders_admin") ||
-           (document.body.innerText || "").toLowerCase().includes("orders admin");
+    const t = text();
+    return t.includes("orders_admin") || t.includes("orders admin");
   }
 
   function fix(){
@@ -12,23 +16,43 @@
       const label = (a.innerText || "").toLowerCase().trim();
       const href = (a.getAttribute("href") || "").toLowerCase();
 
-      if(label === "orders" || href.endsWith("/admin/orders.html") || href.includes("orders.html")){
-        a.setAttribute("href", "/admin/staff-orders.html?v=5200");
+      if(label === "orders" || href.includes("/admin/orders.html")){
+        a.setAttribute("href", "/admin/staff-orders.html?v=5300");
       }
 
-      if(label.includes("affiliates") || href.includes("affiliates")){
+      if(label.includes("affiliates") || href.includes("/admin/affiliates")){
         a.innerText = "Joining Fees";
-        a.setAttribute("href", "/admin/joining-fees.html?v=5200");
+        a.setAttribute("href", "/admin/joining-fees.html?v=5300");
+      }
+
+      if(
+        label.includes("products") ||
+        label.includes("delivery") ||
+        label.includes("admin users") ||
+        label.includes("payment") ||
+        label.includes("logs") ||
+        href.includes("products") ||
+        href.includes("delivery") ||
+        href.includes("users") ||
+        href.includes("logs") ||
+        href.includes("settings") ||
+        href.includes("manual-payments")
+      ){
+        a.remove();
       }
     });
 
     if(location.pathname.toLowerCase() === "/admin/orders.html"){
-      location.replace("/admin/staff-orders.html?v=5200");
+      location.replace("/admin/staff-orders.html?v=5300");
+    }
+
+    if(location.pathname.toLowerCase().includes("/admin/affiliates")){
+      location.replace("/admin/joining-fees.html?v=5300");
     }
   }
 
   document.addEventListener("DOMContentLoaded", fix);
   setTimeout(fix, 100);
   setTimeout(fix, 700);
-  setTimeout(fix, 1600);
+  setTimeout(fix, 1500);
 })();

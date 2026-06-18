@@ -1,0 +1,47 @@
+
+/* ORDER_DETAIL_READABLE_V1 */
+body{
+  color:#241126 !important;
+}
+
+.order-status,
+.status-panel,
+.status-card,
+.customer-info,
+.customer-card,
+aside .card,
+.dark-card,
+[class*="status"]{
+  color:#241126 !important;
+}
+
+.order-status *,
+.status-panel *,
+.status-card *,
+.customer-info *,
+.customer-card *,
+.dark-card *{
+  color:#241126 !important;
+}
+
+select,
+input,
+textarea{
+  color:#241126 !important;
+  background:white !important;
+}
+
+label,
+small,
+p{
+  color:#6f6372 !important;
+}
+
+h1,h2,h3,strong{
+  color:#35112f !important;
+}
+
+button,
+.btn{
+  color:white !important;
+}
