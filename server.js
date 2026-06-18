@@ -2944,4 +2944,113 @@ app.post("/api/admin/limited/orders/:id/fulfilled", limitedOrdersGuard, (req, re
   res.json({success:true, order:orders[index]});
 });
 
+
+
+// SUPERADMIN_DELETE_ORDERS_V1
+function superAdminDeleteOrderGuard(req, res, next) {
+  if (typeof requireAdmin === "function") {
+    return requireAdmin(req, res, function () {
+      const user = req.adminUser || req.user || req.admin || {};
+      const role = String(user.role || user.type || "").toLowerCase();
+
+      if (role !== "super_admin") {
+        return res.status(403).json({
+          success: false,
+          message: "Only super admin can delete orders."
+        });
+      }
+
+      next();
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    message: "Admin login required."
+  });
+}
+
+function superAdminOrderMatches(order, id) {
+  const keys = [
+    order.id,
+    order.orderId,
+    order.orderNumber,
+    order.orderNo,
+    order.reference,
+    order.cleanOrderNumber
+  ].filter(Boolean).map(String);
+
+  return keys.includes(String(id));
+}
+
+app.delete("/api/admin/orders/:id", superAdminDeleteOrderGuard, (req, res) => {
+  const id = req.params.id;
+  const orders = read("orders", []);
+
+  const index = orders.findIndex(o => superAdminOrderMatches(o, id));
+
+  if (index === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found."
+    });
+  }
+
+  const deletedOrder = orders[index];
+
+  const deletedOrders = read("deletedOrders", []);
+
+  deletedOrders.push({
+    ...deletedOrder,
+    deletedAt: new Date().toISOString(),
+    deletedBy: (req.adminUser || req.user || req.admin || {}).email || "super_admin"
+  });
+
+  orders.splice(index, 1);
+
+  write("orders", orders);
+  write("deletedOrders", deletedOrders);
+
+  res.json({
+    success: true,
+    message: "Order deleted.",
+    deletedOrder
+  });
+});
+
+app.post("/api/admin/orders/:id/delete", superAdminDeleteOrderGuard, (req, res) => {
+  const id = req.params.id;
+  const orders = read("orders", []);
+
+  const index = orders.findIndex(o => superAdminOrderMatches(o, id));
+
+  if (index === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found."
+    });
+  }
+
+  const deletedOrder = orders[index];
+
+  const deletedOrders = read("deletedOrders", []);
+
+  deletedOrders.push({
+    ...deletedOrder,
+    deletedAt: new Date().toISOString(),
+    deletedBy: (req.adminUser || req.user || req.admin || {}).email || "super_admin"
+  });
+
+  orders.splice(index, 1);
+
+  write("orders", orders);
+  write("deletedOrders", deletedOrders);
+
+  res.json({
+    success: true,
+    message: "Order deleted.",
+    deletedOrder
+  });
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
