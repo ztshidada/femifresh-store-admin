@@ -1,0 +1,420 @@
+const fs = require("fs");
+const path = require("path");
+
+const publicDir = path.join(__dirname, "public");
+const adminDir = path.join(publicDir, "admin");
+const jsDir = path.join(publicDir, "js");
+
+fs.mkdirSync(adminDir, { recursive: true });
+fs.mkdirSync(jsDir, { recursive: true });
+
+/* LIMITED ORDERS PAGE */
+fs.writeFileSync(path.join(adminDir, "staff-orders.html"), `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Orders | FemiFresh Limited Admin</title>
+  <link rel="stylesheet" href="/css/femifresh-admin-premium.css?v=5200">
+  <style>
+    body{margin:0}
+    .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+    aside{
+      background:linear-gradient(180deg,#240c25,#421041,#68235f);
+      color:white;
+      padding:28px;
+    }
+    aside h2{
+      color:white!important;
+      margin:0 0 30px;
+      font-size:30px!important;
+      line-height:1;
+    }
+    aside a,aside button{
+      display:flex;
+      width:100%;
+      min-height:48px;
+      align-items:center;
+      padding:12px 16px;
+      margin:7px 0;
+      border-radius:18px;
+      border:0;
+      background:transparent;
+      color:white;
+      font-weight:950;
+      text-decoration:none;
+      cursor:pointer;
+      font-size:16px;
+    }
+    aside a.active{
+      background:#fff1fa;
+      color:#68235f;
+    }
+    main{padding:56px 58px}
+    h1{
+      font-size:clamp(52px,7vw,82px)!important;
+      margin:0 0 28px!important;
+      color:#35112f!important;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:18px;
+      margin-bottom:28px;
+    }
+    .stat,.card{
+      background:white;
+      border:1px solid rgba(104,35,95,.14);
+      border-radius:28px;
+      box-shadow:0 18px 46px rgba(104,35,95,.08);
+    }
+    .stat{padding:24px}
+    .stat strong{
+      display:block;
+      color:#68235f;
+      font-size:34px;
+      font-weight:950;
+      margin-top:8px;
+    }
+    .stat span{
+      color:#6f6372;
+      font-weight:900;
+    }
+    .card{padding:28px}
+    .toolbar{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    input,select{
+      min-height:52px;
+      border:1px solid rgba(104,35,95,.14);
+      border-radius:999px;
+      padding:12px 16px;
+      font-size:16px;
+      background:white;
+    }
+    input{min-width:340px}
+    button.btn{
+      border:0;
+      border-radius:999px;
+      min-height:44px;
+      padding:10px 18px;
+      background:linear-gradient(135deg,#68235f,#9b358e,#f4a7d8);
+      color:white;
+      font-weight:950;
+      cursor:pointer;
+    }
+    button.light{
+      background:white!important;
+      color:#68235f!important;
+      border:1px solid rgba(104,35,95,.14)!important;
+    }
+    .table-wrap{overflow:auto;border-radius:22px}
+    table{width:100%;min-width:900px;border-collapse:collapse}
+    th{
+      background:#fff7fd;
+      color:#68235f;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-size:13px;
+      text-align:left;
+      padding:16px;
+    }
+    td{
+      padding:16px;
+      border-bottom:1px solid rgba(104,35,95,.10);
+      vertical-align:top;
+    }
+    .badge{
+      display:inline-flex;
+      border-radius:999px;
+      padding:7px 12px;
+      background:#fff1fa;
+      color:#68235f;
+      font-weight:950;
+      font-size:13px;
+    }
+    small{color:#6f6372}
+    @media(max-width:900px){
+      .layout{display:block}
+      aside{border-radius:0 0 26px 26px}
+      main{padding:24px 14px}
+      .stats{grid-template-columns:1fr}
+      .toolbar{display:grid}
+      input,select,button.btn{width:100%;min-width:0}
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <h2>FemiFresh<br>Admin</h2>
+    <a href="/admin/dashboard.html">Dashboard</a>
+    <a class="active" href="/admin/staff-orders.html">Orders</a>
+    <a href="/admin/joining-fees.html">Joining Fees</a>
+    <button onclick="logout()">Logout</button>
+  </aside>
+
+  <main>
+    <p style="font-weight:900;color:#6f6372;margin:0 0 8px">Limited Admin</p>
+    <h1>Orders</h1>
+
+    <div class="stats">
+      <div class="stat"><span>Total Orders</span><strong id="totalOrders">0</strong></div>
+      <div class="stat"><span>Paid</span><strong id="paidOrders">0</strong></div>
+      <div class="stat"><span>Pending</span><strong id="pendingOrders">0</strong></div>
+      <div class="stat"><span>Paid Sales</span><strong id="paidSales">R0.00</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <input id="search" placeholder="Search order, name, phone, email..." oninput="render()">
+        <select id="paymentFilter" onchange="render()">
+          <option value="">All payments</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+        </select>
+        <select id="fulfillmentFilter" onchange="render()">
+          <option value="">All fulfillment</option>
+          <option value="fulfilled">Fulfilled</option>
+          <option value="new">New</option>
+          <option value="unfulfilled">Unfulfilled</option>
+        </select>
+        <button class="btn light" onclick="loadOrders()">Refresh</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Payment</th>
+              <th>Fulfillment</th>
+              <th>Total</th>
+              <th>Items</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let orders = [];
+
+async function api(url, opts = {}){
+  const res = await fetch(url, {
+    credentials:"include",
+    headers:{"Content-Type":"application/json"},
+    ...opts
+  });
+
+  if(res.status === 401 || res.status === 403){
+    location.href = "/admin/login.html";
+    return {};
+  }
+
+  return res.json().catch(()=>({}));
+}
+
+function money(v){
+  const n = Number(v || 0);
+  return "R" + n.toLocaleString("en-ZA", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function orderNo(o, i){
+  return o.cleanOrderNumber || o.orderNumber || o.orderNo || o.reference || o.id || ("FF-" + String(10001 + i));
+}
+
+function customerName(o){
+  return o.customerName || o.name || o.fullName || o.customer?.name || [o.firstName,o.lastName].filter(Boolean).join(" ") || "Customer";
+}
+
+function customerContact(o){
+  return o.email || o.customerEmail || o.customer?.email || o.phone || o.customerPhone || o.customer?.phone || "";
+}
+
+function paymentStatus(o){
+  return String(o.paymentStatus || (o.paid ? "paid" : "pending")).toLowerCase();
+}
+
+function fulfillmentStatus(o){
+  return String(o.fulfillmentStatus || (o.fulfilled ? "fulfilled" : "new")).toLowerCase();
+}
+
+function orderTotal(o){
+  return o.total || o.amount || o.grandTotal || 0;
+}
+
+function orderItems(o){
+  const items = o.items || o.cart || o.products || [];
+
+  if(!Array.isArray(items)) return "";
+
+  return items.map(item => {
+    const qty = item.quantity || item.qty || 1;
+    const name = item.name || item.title || item.productName || "Item";
+    return qty + "x " + name;
+  }).join("<br>");
+}
+
+function orderId(o, i){
+  return o.id || o.orderId || o.orderNumber || o.orderNo || o.reference || i;
+}
+
+async function loadOrders(){
+  const data = await api("/api/staff/orders");
+
+  orders = data.orders || data.data || [];
+  render();
+}
+
+function renderStats(list){
+  const paid = list.filter(o => paymentStatus(o) === "paid");
+  const pending = list.filter(o => paymentStatus(o) !== "paid");
+  const sales = paid.reduce((sum,o) => sum + Number(orderTotal(o) || 0), 0);
+
+  totalOrders.textContent = list.length;
+  paidOrders.textContent = paid.length;
+  pendingOrders.textContent = pending.length;
+  paidSales.textContent = money(sales);
+}
+
+function render(){
+  const q = (search.value || "").toLowerCase();
+  const pf = paymentFilter.value;
+  const ff = fulfillmentFilter.value;
+
+  let rows = orders.filter(o => {
+    const text = JSON.stringify(o).toLowerCase();
+
+    if(q && !text.includes(q)) return false;
+    if(pf && paymentStatus(o) !== pf) return false;
+    if(ff && fulfillmentStatus(o) !== ff) return false;
+
+    return true;
+  });
+
+  renderStats(orders);
+
+  ordersBody.innerHTML = rows.map((o,i) => {
+    const id = orderId(o,i);
+    const pay = paymentStatus(o);
+    const fulfill = fulfillmentStatus(o);
+
+    return \`
+      <tr>
+        <td><strong>\${orderNo(o,i)}</strong><br><small>\${o.createdAt || o.date || ""}</small></td>
+        <td><strong>\${customerName(o)}</strong><br><small>\${customerContact(o)}</small></td>
+        <td><span class="badge">\${pay}</span></td>
+        <td><span class="badge">\${fulfill}</span></td>
+        <td><strong>\${money(orderTotal(o))}</strong></td>
+        <td>\${orderItems(o)}</td>
+        <td>
+          <button class="btn light" onclick="markPaid('\${id}')">Mark Paid</button>
+          <button class="btn" onclick="markFulfilled('\${id}')">Fulfill</button>
+        </td>
+      </tr>
+    \`;
+  }).join("") || '<tr><td colspan="7">No orders found.</td></tr>';
+}
+
+async function markPaid(id){
+  if(!confirm("Mark this order as paid?")) return;
+
+  const data = await api("/api/staff/orders/" + encodeURIComponent(id) + "/paid", {
+    method:"POST"
+  });
+
+  if(data.success) loadOrders();
+  else alert(data.message || "Could not mark order as paid.");
+}
+
+async function markFulfilled(id){
+  if(!confirm("Mark this order as fulfilled?")) return;
+
+  const data = await api("/api/staff/orders/" + encodeURIComponent(id) + "/fulfilled", {
+    method:"POST"
+  });
+
+  if(data.success) loadOrders();
+  else alert(data.message || "Could not fulfill order.");
+}
+
+async function logout(){
+  await fetch("/api/admin/logout", {method:"POST", credentials:"include"}).catch(()=>{});
+  location.href = "/admin/login.html";
+}
+
+loadOrders();
+</script>
+</body>
+</html>`);
+
+/* Redirect orders_admin Orders menu to staff-orders */
+fs.writeFileSync(path.join(jsDir, "orders-admin-route-fix.js"), `
+(function(){
+  function isOrdersAdmin(){
+    return (document.body.innerText || "").toLowerCase().includes("orders_admin") ||
+           (document.body.innerText || "").toLowerCase().includes("orders admin");
+  }
+
+  function fix(){
+    if(!isOrdersAdmin()) return;
+
+    document.querySelectorAll("aside a, .sidebar a, nav a").forEach(a => {
+      const label = (a.innerText || "").toLowerCase().trim();
+      const href = (a.getAttribute("href") || "").toLowerCase();
+
+      if(label === "orders" || href.endsWith("/admin/orders.html") || href.includes("orders.html")){
+        a.setAttribute("href", "/admin/staff-orders.html?v=5200");
+      }
+
+      if(label.includes("affiliates") || href.includes("affiliates")){
+        a.innerText = "Joining Fees";
+        a.setAttribute("href", "/admin/joining-fees.html?v=5200");
+      }
+    });
+
+    if(location.pathname.toLowerCase() === "/admin/orders.html"){
+      location.replace("/admin/staff-orders.html?v=5200");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", fix);
+  setTimeout(fix, 100);
+  setTimeout(fix, 700);
+  setTimeout(fix, 1600);
+})();
+`);
+
+function walk(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
+
+  for (const item of fs.readdirSync(dir)) {
+    const full = path.join(dir, item);
+    const stat = fs.statSync(full);
+
+    if (stat.isDirectory()) walk(full, out);
+    else if (stat.isFile() && full.endsWith(".html")) out.push(full);
+  }
+
+  return out;
+}
+
+for (const file of walk(adminDir)) {
+  let html = fs.readFileSync(file, "utf8");
+
+  html = html.replace(/<script[^>]+orders-admin-route-fix\.js[^>]*><\/script>\s*/gi, "");
+  html = html.replace("</body>", '  <script src="/js/orders-admin-route-fix.js?v=5200"></script>\n</body>');
+
+  fs.writeFileSync(file, html);
+}
+
+console.log("Limited orders page created and Orders menu fixed.");
