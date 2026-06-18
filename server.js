@@ -2734,4 +2734,98 @@ app.post("/api/staff/affiliates/:id/mark-joined", staffAuth, (req, res) => {
   });
 });
 
+
+
+// LIMITED_ADMIN_JOINING_FEES_V1
+function limitedAdminCanUse(req) {
+  const user = req.adminUser || req.user || req.admin || {};
+  const role = String(user.role || user.type || "").toLowerCase();
+
+  return (
+    role === "super_admin" ||
+    role === "admin" ||
+    role === "orders_admin" ||
+    role === "staff_admin"
+  );
+}
+
+function joiningFeePaidLimited(a) {
+  return !!(
+    a.joiningFeePaid ||
+    a.manualJoiningFeePaid ||
+    a.joiningFeeStatus === "paid" ||
+    a.paymentStatus === "paid" ||
+    a.accountStatus === "approved" ||
+    a.approved === true ||
+    a.isApproved === true
+  );
+}
+
+function limitedAdminGuard(req, res, next) {
+  if (typeof requireAdmin === "function") {
+    return requireAdmin(req, res, function(){
+      if (!limitedAdminCanUse(req)) {
+        return res.status(403).json({success:false,message:"Not allowed."});
+      }
+      next();
+    });
+  }
+  next();
+}
+
+app.get("/api/admin/limited/joining-fees", limitedAdminGuard, (req, res) => {
+  const affiliates = read("affiliates", []);
+
+  res.json({
+    success:true,
+    affiliates: affiliates
+      .filter(a => !joiningFeePaidLimited(a))
+      .map(a => ({
+        id:a.id,
+        firstName:a.firstName,
+        lastName:a.lastName,
+        fullName:a.fullName || a.name || [a.firstName,a.lastName].filter(Boolean).join(" "),
+        email:a.email,
+        phone:a.phone,
+        referralCode:a.referralCode || a.code,
+        joiningFeeStatus:a.joiningFeeStatus || a.paymentStatus || a.accountStatus || "pending",
+        createdAt:a.createdAt
+      }))
+  });
+});
+
+app.post("/api/admin/limited/affiliates/:id/mark-joined", limitedAdminGuard, (req, res) => {
+  const id = req.params.id;
+  const affiliates = read("affiliates", []);
+
+  const index = affiliates.findIndex(a =>
+    String(a.id || "") === String(id) ||
+    String(a.email || "").toLowerCase() === String(id).toLowerCase()
+  );
+
+  if (index === -1) {
+    return res.status(404).json({success:false,message:"Affiliate not found."});
+  }
+
+  affiliates[index] = {
+    ...affiliates[index],
+    joiningFeePaid:true,
+    manualJoiningFeePaid:true,
+    joiningFeeStatus:"paid",
+    paymentStatus:"paid",
+    accountStatus:"approved",
+    approved:true,
+    isApproved:true,
+    joined:true,
+    joiningFeeAmount: affiliates[index].joiningFeeAmount || 100,
+    joiningFeePaidAt: affiliates[index].joiningFeePaidAt || new Date().toISOString(),
+    approvedAt: affiliates[index].approvedAt || new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+
+  write("affiliates", affiliates);
+
+  res.json({success:true, affiliate:affiliates[index]});
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
