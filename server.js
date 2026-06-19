@@ -3253,4 +3253,162 @@ async function forceLiveTshirtR280Once() {
 
 setTimeout(forceLiveTshirtR280Once, 2200);
 
+
+
+// FEMI_AFFILIATE_SENAFIX_FEATURES_V1
+function femiAffNorm(v) {
+  return String(v || "").trim().toLowerCase();
+}
+
+function femiFindAffiliate(req) {
+  const q = req.query || {};
+  const b = req.body || {};
+  const token = String(q.token || b.token || "").trim();
+  const id = String(q.id || b.id || "").trim();
+  const email = femiAffNorm(q.email || b.email);
+
+  const affiliates = read("affiliates", []);
+
+  return affiliates.find(a => {
+    return (
+      (token && String(a.token || "") === token) ||
+      (id && String(a.id || "") === id) ||
+      (email && femiAffNorm(a.email) === email)
+    );
+  }) || null;
+}
+
+function femiAffName(a) {
+  return a.fullName || a.name || [a.firstName, a.lastName].filter(Boolean).join(" ") || "Affiliate";
+}
+
+function femiAffCode(a) {
+  return a.referralCode || a.code || a.affiliateCode || "";
+}
+
+function femiAffiliateJoined(a) {
+  return !!(
+    a.joiningFeePaid ||
+    a.manualJoiningFeePaid ||
+    a.joiningFeeStatus === "paid" ||
+    a.paymentStatus === "paid" ||
+    a.accountStatus === "approved" ||
+    a.approved === true ||
+    a.isApproved === true
+  );
+}
+
+function femiDirectsFor(affiliate, affiliates) {
+  const code = femiAffCode(affiliate);
+  const id = affiliate.id;
+
+  return affiliates.filter(a => {
+    return (
+      (code && String(a.sponsorCode || "").toUpperCase() === String(code).toUpperCase()) ||
+      (id && String(a.sponsorId || "") === String(id)) ||
+      (code && String(a.referrerCode || "").toUpperCase() === String(code).toUpperCase())
+    );
+  });
+}
+
+function femiBuildDownline(rootAffiliate, affiliates, level = 1, max = 10, seen = new Set()) {
+  if (!rootAffiliate || level > max) return [];
+
+  const rootId = rootAffiliate.id || femiAffCode(rootAffiliate);
+  if (seen.has(rootId)) return [];
+  seen.add(rootId);
+
+  const directs = femiDirectsFor(rootAffiliate, affiliates);
+
+  return directs.map(a => ({
+    id: a.id,
+    level,
+    fullName: femiAffName(a),
+    email: a.email,
+    phone: a.phone,
+    referralCode: femiAffCode(a),
+    joined: femiAffiliateJoined(a),
+    children: femiBuildDownline(a, affiliates, level + 1, max, seen)
+  }));
+}
+
+app.get("/api/affiliate/femi-features", (req, res) => {
+  const affiliate = femiFindAffiliate(req);
+
+  if (!affiliate) {
+    return res.status(404).json({
+      success: false,
+      message: "Affiliate not found."
+    });
+  }
+
+  const affiliates = read("affiliates", []);
+  const directs = femiDirectsFor(affiliate, affiliates);
+
+  res.json({
+    success: true,
+    affiliate: {
+      id: affiliate.id,
+      fullName: femiAffName(affiliate),
+      email: affiliate.email,
+      phone: affiliate.phone,
+      referralCode: femiAffCode(affiliate),
+      bankDetails: affiliate.bankDetails || {}
+    },
+    referralLink: "https://affiliates.femifresh.co.za/?ref=" + encodeURIComponent(femiAffCode(affiliate)),
+    directReferrals: directs.map(a => ({
+      id: a.id,
+      fullName: femiAffName(a),
+      email: a.email,
+      phone: a.phone,
+      referralCode: femiAffCode(a),
+      joined: femiAffiliateJoined(a),
+      monthlyStatus: femiAffiliateJoined(a) ? "Joined" : "Not Yet This Month"
+    })),
+    downline: femiBuildDownline(affiliate, affiliates, 1, 10)
+  });
+});
+
+app.post("/api/affiliate/femi-bank-details", (req, res) => {
+  const affiliate = femiFindAffiliate(req);
+
+  if (!affiliate) {
+    return res.status(404).json({
+      success: false,
+      message: "Affiliate not found."
+    });
+  }
+
+  const affiliates = read("affiliates", []);
+  const index = affiliates.findIndex(a => String(a.id || "") === String(affiliate.id || ""));
+
+  if (index === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Affiliate not found."
+    });
+  }
+
+  const body = req.body || {};
+
+  affiliates[index] = {
+    ...affiliates[index],
+    bankDetails: {
+      accountHolderName: String(body.accountHolderName || "").trim(),
+      bankName: String(body.bankName || "").trim(),
+      accountNumber: String(body.accountNumber || "").trim(),
+      branchCode: String(body.branchCode || "").trim(),
+      accountType: String(body.accountType || "").trim()
+    },
+    updatedAt: new Date().toISOString()
+  };
+
+  write("affiliates", affiliates);
+
+  res.json({
+    success: true,
+    bankDetails: affiliates[index].bankDetails
+  });
+});
+
 app.listen(PORT, () => console.log(`FemiFresh running on http://localhost:${PORT}`));
