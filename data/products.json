@@ -127,7 +127,7 @@
     "image": "/images/products/distributor-tshirt.jpeg",
     "description": "FemiFresh branded distributor T-shirt. One T-shirt.",
     "createdAt": "2026-06-19T07:24:46.804Z",
-    "updatedAt": "2026-06-19T07:24:46.809Z"
+    "updatedAt": "2026-06-19T07:29:33.386Z"
   },
   {
     "id": "femifresh-silver-package-cranberry-fat-burner",
@@ -141,7 +141,7 @@
     "image": "/images/products/silver-cranberry-fat-burner.jpeg",
     "description": "Silver Package: 5 Cranberry Teas + 5 Fat Burner Capsules. Stock of 10.",
     "createdAt": "2026-06-19T07:24:46.809Z",
-    "updatedAt": "2026-06-19T07:24:46.809Z"
+    "updatedAt": "2026-06-19T07:29:33.387Z"
   },
   {
     "id": "femifresh-silver-package-fat-burner-tummy-control",
@@ -155,6 +155,6 @@
     "image": "/images/products/silver-fat-burner-tummy-control.jpeg",
     "description": "Silver Package: 5 Fat Burner Capsules + 5 Tummy Control Capsules. Stock of 10.",
     "createdAt": "2026-06-19T07:24:46.809Z",
-    "updatedAt": "2026-06-19T07:24:46.809Z"
+    "updatedAt": "2026-06-19T07:29:33.387Z"
   }
 ]

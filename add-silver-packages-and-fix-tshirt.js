@@ -1,10 +1,30 @@
 const fs = require("fs");
 const path = require("path");
 
-const productsFile = path.join(__dirname, "data", "products.json");
+const root = __dirname;
+const productsFile = path.join(root, "data", "products.json");
+const imgDir = path.join(root, "public", "images", "products");
 
-if (!fs.existsSync(productsFile)) {
-  throw new Error("data/products.json not found");
+fs.mkdirSync(imgDir, { recursive: true });
+
+const imageSources = [
+  {
+    from: path.join(process.env.HOME, "Downloads", "silver-cranberry-fat-burner.jpeg"),
+    to: path.join(imgDir, "silver-cranberry-fat-burner.jpeg")
+  },
+  {
+    from: path.join(process.env.HOME, "Downloads", "silver-fat-burner-tummy-control.jpeg"),
+    to: path.join(imgDir, "silver-fat-burner-tummy-control.jpeg")
+  }
+];
+
+for (const img of imageSources) {
+  if (!fs.existsSync(img.from)) {
+    throw new Error("Image missing: " + img.from);
+  }
+
+  fs.copyFileSync(img.from, img.to);
+  console.log("Saved image:", img.to);
 }
 
 let products = JSON.parse(fs.readFileSync(productsFile, "utf8"));
@@ -13,7 +33,7 @@ function norm(v) {
   return String(v || "").toLowerCase().trim();
 }
 
-function upsertProduct(product) {
+function upsert(product) {
   const index = products.findIndex(p => p.id === product.id);
 
   if (index >= 0) {
@@ -31,30 +51,30 @@ function upsertProduct(product) {
   }
 }
 
-/*
-  Remove only the duplicated T-shirt stock versions.
-  We keep/create one normal T-shirt product at R280.
-*/
+/* Remove only T-shirt Full Stock / Half Stock versions */
 products = products.filter(p => {
   const name = norm(p.name || p.title);
   const category = norm(p.category);
   const image = norm(p.image || p.imageUrl);
 
-  const isTshirt = name.includes("t-shirt") || name.includes("tshirt") || image.includes("tshirt");
+  const isTshirt =
+    name.includes("t-shirt") ||
+    name.includes("tshirt") ||
+    image.includes("tshirt");
 
   if (!isTshirt) return true;
 
-  const isFullOrHalf =
+  const isStockVersion =
     name.includes("full stock") ||
     name.includes("half stock") ||
     category === "full stock" ||
     category === "half stock";
 
-  return !isFullOrHalf;
+  return !isStockVersion;
 });
 
-/* One T-shirt product only */
-upsertProduct({
+/* One T-shirt only */
+upsert({
   id: "femifresh-distributor-t-shirt",
   name: "FemiFresh Distributor T-Shirt",
   category: "Merchandise",
@@ -67,8 +87,8 @@ upsertProduct({
   description: "FemiFresh branded distributor T-shirt. One T-shirt."
 });
 
-/* Add Silver Package 1 */
-upsertProduct({
+/* New Silver Package 1 */
+upsert({
   id: "femifresh-silver-package-cranberry-fat-burner",
   name: "FemiFresh Silver Package - Cranberry Tea + Fat Burner Capsules",
   category: "Silver Package",
@@ -81,8 +101,8 @@ upsertProduct({
   description: "Silver Package: 5 Cranberry Teas + 5 Fat Burner Capsules. Stock of 10."
 });
 
-/* Add Silver Package 2 */
-upsertProduct({
+/* New Silver Package 2 */
+upsert({
   id: "femifresh-silver-package-fat-burner-tummy-control",
   name: "FemiFresh Silver Package - Fat Burner + Tummy Control Capsules",
   category: "Silver Package",
@@ -98,6 +118,6 @@ upsertProduct({
 fs.writeFileSync(productsFile, JSON.stringify(products, null, 2));
 
 console.log("Done.");
-console.log("Products count:", products.length);
-console.log("Added 2 Silver Packages.");
+console.log("Added 2 Silver Package products.");
 console.log("T-shirt fixed to one product at R280.");
+console.log("Products count:", products.length);
