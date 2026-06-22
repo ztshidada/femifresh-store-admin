@@ -25,7 +25,6 @@ const defaultSettings = {
     manualInstructions: "Please make payment and send proof of payment to WhatsApp 0632180372. Use your order number or registered email as reference."
   },
   commission: {
-    referralBonusPerActiveDirect: 300,
     targetActiveDirects: 10,
     targetBonusAmount: 1000
   },

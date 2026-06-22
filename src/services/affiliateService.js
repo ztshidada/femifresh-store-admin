@@ -72,16 +72,17 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
   const activeDirects = directs.filter(a => affiliateActive(a, month));
   const selfActive = affiliateActive(affiliate, month);
   const commission = getSettings().commission || {};
-  const referralBonusPerActiveDirect = Number(commission.referralBonusPerActiveDirect ?? 300);
   const targetActiveDirects = Math.max(1, Number(commission.targetActiveDirects ?? 10));
   const targetBonusAmount = Number(commission.targetBonusAmount ?? 1000);
-  const referralBonusCounted = activeDirects.length * referralBonusPerActiveDirect;
   const targetBonusCounted = activeDirects.length >= targetActiveDirects ? targetBonusAmount : 0;
   const productCommissions = read("orders", [])
     .filter(o => String(o.referralCode || "").toUpperCase() === String(affiliate.referralCode || "").toUpperCase())
     .filter(o => String(o.paymentStatus || "").toLowerCase() === "paid")
     .reduce((sum, order) => sum + (order.items || []).reduce((itemSum, item) => itemSum + Number(item.directReferralCommission || item.commission || 0), 0), 0);
-  const totalCounted = referralBonusCounted + targetBonusCounted + productCommissions;
+  // Referral commission comes only from paid orders and the commission
+  // configured on each purchased product.
+  const referralBonusCounted = productCommissions;
+  const totalCounted = referralBonusCounted + targetBonusCounted;
   const payoutBlocked = affiliate.payoutBlocked === true;
   const totalPayable = selfActive && !payoutBlocked ? totalCounted : 0;
   const totalBlocked = totalCounted - totalPayable;
@@ -102,7 +103,6 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
     totalPayable,
     totalBlocked,
     blockedReason,
-    referralBonusPerActiveDirect,
     targetActiveDirects,
     targetBonusAmount,
     needsForTarget: Math.max(0, targetActiveDirects - activeDirects.length),

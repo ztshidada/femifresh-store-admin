@@ -429,12 +429,7 @@
 
       <section class="ff-card">
         <form class="ff-form" id="commissionSettingsForm">
-          <h2>Commission & Target Bonus Settings</h2>
-
-          <label class="ff-field">
-            Referral Bonus Per Active Direct (R)
-            <input class="ff-input" name="referralBonusPerActiveDirect" type="number" min="0" value="${esc(s.commission?.referralBonusPerActiveDirect ?? 300)}">
-          </label>
+          <h2>Target Bonus Settings</h2>
 
           <label class="ff-field">
             Target Active Direct Referrals
