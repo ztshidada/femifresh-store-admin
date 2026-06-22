@@ -1,96 +1,24 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <title>Affiliate Login</title>
-  <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/femifresh-unified.css">
-  <link rel="stylesheet" href="/css/affiliate-premium.css">
-    <script src="/js/affiliate-payment-controller.js"></script>
-  <link rel="stylesheet" href="/css/femifresh-mobile-system.css">
-  <link rel="stylesheet" href="/css/femi-senafix-style.css">
-  <link rel="stylesheet" href="/css/femi-store-stable.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Distributor Login - FemiFresh</title>
+  <link rel="icon" href="/images/femifresh-logo.jpg">
+  <link rel="stylesheet" href="/css/femifresh-system.css">
 </head>
 <body>
-
-
-
-
-<main class="affiliate-page">
-  <section class="container auth-center">
-    <form class="affiliate-card small-auth" onsubmit="loginAffiliate(event)">
-      <h2>Affiliate Login</h2>
-      <input type="email" name="email" placeholder="Email" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <button type="submit">Login</button>
-      <p>New affiliate? <a href="/">Join here</a></p>
+  <main class="ff-container ff-section" style="max-width:560px">
+    <form id="affiliateLogin" class="ff-card ff-form">
+      <a class="ff-brand" href="/"><img src="/images/femifresh-logo.jpg" alt="">FemiFresh</a>
+      <h1 class="ff-page-title" style="font-size:42px">Distributor Login</h1>
+      <label class="ff-field">Email<input class="ff-input" name="email" type="email" autocomplete="username" required></label>
+      <label class="ff-field">Password<input class="ff-input" name="password" type="password" autocomplete="current-password" required></label>
+      <button class="ff-btn">Login</button>
+      <p class="ff-muted">New distributor? <a href="/join"><strong>Join here</strong></a>. Forgot password? Request reset from admin for now.</p>
     </form>
-  </section>
-</main>
-
-<script>
-async function loginAffiliate(e) {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-
-  const res = await fetch("/api/affiliate/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: fd.get("email"),
-      password: fd.get("password")
-    })
-  });
-
-  const data = await res.json();
-
-  if (!data.success) {
-    alert(data.message || "Login failed.");
-    return;
-  }
-
-  localStorage.setItem("ff_affiliate_token", data.token);
-  localStorage.setItem("ff_affiliate", JSON.stringify(data.affiliate));
-  location.href = "/dashboard";
-}
-</script>
-
-<script>
-(function () {
-  const forms = document.querySelectorAll("form");
-  const form = forms[0];
-
-  const box = document.createElement("div");
-  box.className = "ff-forgot-password";
-  box.innerHTML = '<a href="#" id="ffForgotLink">Forgot password?</a>';
-
-  if (form) {
-    form.insertAdjacentElement("afterend", box);
-  } else {
-    document.body.appendChild(box);
-  }
-
-  document.getElementById("ffForgotLink").addEventListener("click", async function(e) {
-    e.preventDefault();
-
-    const email = prompt("Enter your affiliate email address:");
-    if (!email) return;
-
-    const res = await fetch("/api/affiliate/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await res.json().catch(() => ({}));
-    alert(data.message || "If this email exists, a reset link has been sent.");
-  });
-})();
-</script>
-
-
-    <script src="/js/femifresh-mobile-system.js"></script>
-  <script src="/js/femi-senafix-style.js"></script>
-  <script src="/js/femi-store-stable.js"></script>
-  <script src="/js/out-of-stock-protection.js?v=4200"></script>
+  </main>
+  <script src="/js/femifresh-ui.js"></script>
+  <script src="/js/affiliate-platform.js"></script>
 </body>
 </html>

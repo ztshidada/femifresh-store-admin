@@ -1,1 +1,59 @@
-{}
+{
+  "business": {
+    "name": "FemiFresh",
+    "email": "femifresh02@gmail.com",
+    "phone": "0632180372",
+    "whatsapp": "0632180372",
+    "address": "South Africa",
+    "hours": "Monday to Saturday, 08:00 - 17:00"
+  },
+  "bank": {
+    "bankName": "FNB",
+    "accountHolder": "Femi Fresh (PTY) LTD",
+    "accountType": "FNB Business Account",
+    "accountNumber": "63214749822",
+    "branchCode": "",
+    "proofEmail": "femifresh02@gmail.com",
+    "proofWhatsapp": "0632180372"
+  },
+  "payment": {
+    "activeMethod": "manual",
+    "yocoEnabled": false,
+    "joiningFeeAmount": 100,
+    "manualInstructions": "Please make payment and send proof of payment to WhatsApp 0632180372. Use your order number or registered email as reference."
+  },
+  "deliveryZones": [
+    {
+      "id": "collection",
+      "name": "Collection",
+      "regions": [
+        "All"
+      ],
+      "fee": 0,
+      "active": true
+    },
+    {
+      "id": "paxi",
+      "name": "Paxi",
+      "regions": [
+        "South Africa"
+      ],
+      "fee": 60,
+      "active": true
+    },
+    {
+      "id": "courier",
+      "name": "Courier",
+      "regions": [
+        "South Africa"
+      ],
+      "fee": 100,
+      "active": true
+    }
+  ],
+  "notificationTemplates": {
+    "unpaidOrderWhatsapp": "Hi {{name}}, your FemiFresh order {{orderNumber}} for {{total}} is awaiting payment. Please send proof of payment to WhatsApp 0632180372 using reference {{orderNumber}}.",
+    "joiningFeeWhatsapp": "Hi {{name}}, your FemiFresh affiliate account is awaiting the R100 joining fee. Please send proof of payment to WhatsApp 0632180372 using your registered email as reference.",
+    "fulfilledWhatsapp": "Hi {{name}}, your FemiFresh order {{orderNumber}} has been fulfilled. Tracking: {{trackingNumber}}"
+  }
+}

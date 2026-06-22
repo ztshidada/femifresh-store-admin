@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "migrate:preview": "node scripts/migrate-rebuild-data.js",
+    "migrate:apply": "node scripts/migrate-rebuild-data.js --apply"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

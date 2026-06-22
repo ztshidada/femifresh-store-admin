@@ -1,16 +1,15 @@
 # FemiFresh Store + Admin v1
 
-This zip contains the first foundation for FemiFresh:
+This repository contains the FemiFresh platform:
 
 - Public website/storefront
 - Cart and checkout pages
-- Website admin panel
-- Role-based admin access
+- Affiliate/distributor dashboard
+- Role-based admin panel
 - Products management
-- Delivery methods
 - Orders management
-- Email logging/sending structure
-- Yoco webhook placeholder route
+- Manual proof-of-payment workflow
+- Commission, payout, joining-fee and fulfilment operations
 
 ## Run locally
 
@@ -26,20 +25,22 @@ Open:
 - Website: http://localhost:3000
 - Admin: http://localhost:3000/admin/login.html
 
-## Demo admin accounts
+## Admin accounts
 
-Super Admin:
+Admin users are stored in `data/users.json` locally, or in the configured remote storage on production. Demo admin users are no longer printed or created by default. For local-only development, set `ALLOW_DEMO_SEED=true` before running `npm run seed`.
 
-```text
-admin@femifresh.local
-Admin@12345
+## Rebuild migration
+
+Preview the product/settings/data-store migration:
+
+```bash
+npm run migrate:preview
 ```
 
-Orders Admin:
+Apply it after reviewing the report:
 
-```text
-orders@femifresh.local
-Orders@12345
+```bash
+npm run migrate:apply
 ```
 
 ## Admin role rules
@@ -52,25 +53,19 @@ Orders Admin can only:
 - View orders
 - Update order payment status
 - Update order fulfillment status
-- Print orders
+- Add tracking numbers
+- Approve R100 joining fees
 
 Orders Admin cannot:
 
 - Manage products
-- Manage delivery methods
 - Create admins
 - View sensitive settings/logs
 - Change payment keys
 
-## Yoco
+## Payment
 
-The route is prepared:
-
-```text
-POST /api/webhooks/yoco
-```
-
-The live checkout API should be connected when the real Yoco secret key is ready.
+Manual payment is the active checkout method. Customers and affiliates receive bank/WhatsApp proof-of-payment instructions after checkout or signup. The Yoco webhook route only logs disabled events until online payments are intentionally re-enabled.
 
 ## Emails
 

@@ -116,6 +116,11 @@
     "units": 5
   },
   {
+    "lowStockThreshold": 3,
+    "type": "product",
+    "bundleItems": [],
+    "specialPrice": null,
+    "commissionRules": {},
     "id": "femifresh-distributor-t-shirt",
     "name": "FemiFresh Distributor T-Shirt",
     "category": "Merchandise",
@@ -125,36 +130,57 @@
     "inStock": true,
     "available": true,
     "image": "/images/products/distributor-tshirt.jpeg",
-    "description": "FemiFresh branded distributor T-shirt. One T-shirt.",
+    "description": "FemiFresh branded distributor T-shirt.",
     "createdAt": "2026-06-19T07:24:46.804Z",
-    "updatedAt": "2026-06-19T07:29:33.386Z"
+    "updatedAt": "2026-06-22T20:41:41.308Z",
+    "active": true,
+    "outOfStock": false,
+    "quantity": 100
   },
   {
     "id": "femifresh-silver-package-cranberry-fat-burner",
-    "name": "FemiFresh Silver Package - Cranberry Tea + Fat Burner Capsules",
+    "name": "Silver Package: Cranberry Tea + Fat Burner Capsules",
     "category": "Silver Package",
     "price": 1350,
-    "stock": 100,
+    "stock": 10,
     "status": "active",
     "inStock": true,
     "available": true,
     "image": "/images/products/silver-cranberry-fat-burner.jpeg",
-    "description": "Silver Package: 5 Cranberry Teas + 5 Fat Burner Capsules. Stock of 10.",
+    "description": "Silver Package: 5 Cranberry Teas + 5 Fat Burner Capsules.",
     "createdAt": "2026-06-19T07:24:46.809Z",
-    "updatedAt": "2026-06-19T07:29:33.387Z"
+    "updatedAt": "2026-06-22T20:41:41.308Z",
+    "lowStockThreshold": 3,
+    "type": "bundle",
+    "bundleItems": [],
+    "specialPrice": null,
+    "commissionRules": {
+      "directReferralCommission": 400
+    },
+    "active": true,
+    "outOfStock": false,
+    "quantity": 10
   },
   {
     "id": "femifresh-silver-package-fat-burner-tummy-control",
-    "name": "FemiFresh Silver Package - Fat Burner + Tummy Control Capsules",
+    "name": "Silver Package: Fat Burner Capsules + Tummy Control Capsules",
     "category": "Silver Package",
     "price": 1350,
-    "stock": 100,
+    "stock": 10,
     "status": "active",
     "inStock": true,
     "available": true,
     "image": "/images/products/silver-fat-burner-tummy-control.jpeg",
-    "description": "Silver Package: 5 Fat Burner Capsules + 5 Tummy Control Capsules. Stock of 10.",
+    "description": "Silver Package: 5 Fat Burner Capsules + 5 Tummy Control Capsules.",
     "createdAt": "2026-06-19T07:24:46.809Z",
-    "updatedAt": "2026-06-19T07:29:33.387Z"
+    "updatedAt": "2026-06-22T20:41:41.308Z",
+    "lowStockThreshold": 3,
+    "type": "bundle",
+    "bundleItems": [],
+    "specialPrice": null,
+    "commissionRules": {},
+    "active": true,
+    "outOfStock": false,
+    "quantity": 10
   }
 ]
