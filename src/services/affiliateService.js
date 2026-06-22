@@ -71,32 +71,56 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
   const directs = directReferrals(affiliate, affiliates);
   const activeDirects = directs.filter(a => affiliateActive(a, month));
   const selfActive = affiliateActive(affiliate, month);
-  const commission = getSettings().commission || {};
-  const targetActiveDirects = Math.max(1, Number(commission.targetActiveDirects ?? 10));
-  const targetBonusAmount = Number(commission.targetBonusAmount ?? 1000);
-  const targetBonusCounted = activeDirects.length >= targetActiveDirects ? targetBonusAmount : 0;
+
+  const settings = getSettings();
+  const commissionSettings = settings.commission || {};
+  const targetActiveDirects = Math.max(1, Number(commissionSettings.targetActiveDirects ?? 10));
+  const targetBonusAmount = Number(commissionSettings.targetBonusAmount ?? 1000);
+
   const productCommissions = read("orders", [])
-    .filter(o => String(o.referralCode || "").toUpperCase() === String(affiliate.referralCode || "").toUpperCase())
-    .filter(o => String(o.paymentStatus || "").toLowerCase() === "paid")
-    .reduce((sum, order) => sum + (order.items || []).reduce((itemSum, item) => itemSum + Number(item.directReferralCommission || item.commission || 0), 0), 0);
-  // Referral commission comes only from paid orders and the commission
-  // configured on each purchased product.
-  const referralBonusCounted = productCommissions;
-  const totalCounted = referralBonusCounted + targetBonusCounted;
+    .filter(order =>
+      String(order.referralCode || "").toUpperCase() ===
+      String(affiliate.referralCode || "").toUpperCase()
+    )
+    .filter(order => String(order.paymentStatus || "").toLowerCase() === "paid")
+    .reduce((sum, order) => {
+      return sum + (order.items || []).reduce((itemSum, item) => {
+        const quantity = Math.max(1, Number(item.qty || item.quantity || 1));
+        const total = Number(item.directReferralCommissionTotal);
+
+        if (Number.isFinite(total) && total >= 0) {
+          return itemSum + total;
+        }
+
+        return itemSum + (Number(item.directReferralCommission || item.commission || 0) * quantity);
+      }, 0);
+    }, 0);
+
+  const targetBonusCounted = activeDirects.length >= targetActiveDirects
+    ? targetBonusAmount
+    : 0;
+
+  const totalCounted = productCommissions + targetBonusCounted;
   const payoutBlocked = affiliate.payoutBlocked === true;
   const totalPayable = selfActive && !payoutBlocked ? totalCounted : 0;
   const totalBlocked = totalCounted - totalPayable;
 
   let blockedReason = "";
-  if (totalCounted > 0 && !selfActive) blockedReason = "Distributor is not active for this month.";
-  if (totalCounted > 0 && payoutBlocked) blockedReason = affiliate.payoutBlockedReason || "Payout is blocked by admin review.";
+
+  if (totalCounted > 0 && !selfActive) {
+    blockedReason = "Distributor is not active for this month.";
+  }
+
+  if (totalCounted > 0 && payoutBlocked) {
+    blockedReason = affiliate.payoutBlockedReason || "Payout is blocked by admin review.";
+  }
 
   return {
     month,
     selfActive,
     directRecruits: directs.length,
     activeDirectRecruits: activeDirects.length,
-    referralBonusCounted,
+    referralBonusCounted: productCommissions,
     targetBonusCounted,
     productCommissions,
     totalCounted,

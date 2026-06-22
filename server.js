@@ -32,6 +32,7 @@ const affiliateService = require("./src/services/affiliateService");
 const settingsService = require("./src/services/settingsService");
 const notificationService = require("./src/services/notificationService");
 const opsService = require("./src/services/opsService");
+const commissionRebuildService = require("./src/services/commissionRebuildService");
 const { sendMail } = require("./src/mail");
 
 const app = express();
@@ -416,6 +417,15 @@ app.post("/api/admin/pop-submissions/:id/review", requireAdmin, requirePermissio
     }
   }
   ok(res, { submission });
+});
+
+
+app.get("/api/admin/commission-rebuild/preview", requireAdmin, requireRole("super_admin"), (req, res) => {
+  ok(res, commissionRebuildService.previewCommissionRebuild());
+});
+
+app.post("/api/admin/commission-rebuild/apply", requireAdmin, requireRole("super_admin"), (req, res) => {
+  ok(res, commissionRebuildService.applyCommissionRebuild(req.user));
 });
 
 app.get("/api/admin/products", requireAdmin, requirePermission("products:read"), (req, res) => ok(res, { products: productService.allProducts({ includeInactive: true }) }));
