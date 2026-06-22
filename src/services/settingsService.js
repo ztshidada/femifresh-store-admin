@@ -24,6 +24,11 @@ const defaultSettings = {
     joiningFeeAmount: 100,
     manualInstructions: "Please make payment and send proof of payment to WhatsApp 0632180372. Use your order number or registered email as reference."
   },
+  commission: {
+    referralBonusPerActiveDirect: 300,
+    targetActiveDirects: 10,
+    targetBonusAmount: 1000
+  },
   deliveryZones: [
     { id: "collection", name: "Collection", regions: ["All"], fee: 0, active: true },
     { id: "paxi", name: "Paxi", regions: ["South Africa"], fee: 60, active: true },

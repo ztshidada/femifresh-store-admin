@@ -4,8 +4,9 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+const fs = require("fs");
 const { v4: uuid } = require("uuid");
-const { read, write } = require("./src/db");
+const { read, write, dataDir } = require("./src/db");
 require("./src/seed");
 
 const {
@@ -340,6 +341,69 @@ app.post("/api/admin/orders/:id/delete", requireAdmin, requireRole("super_admin"
   if (!deletedOrder) return res.status(404).json({ success: false, message: "Order not found." });
   ok(res, { deletedOrder, message: "Order deleted with backup." });
 });
+
+// FEMIFRESH_POP_FILE_VIEW_V1
+app.get("/api/admin/pop-submissions/:id/file", requireAdmin, requirePermission("pop:review"), (req, res) => {
+  const submission = read("popSubmissions", []).find(p => String(p.id) === String(req.params.id));
+
+  if (!submission || !submission.file || !submission.file.storedName) {
+    return res.status(404).json({ success: false, message: "Proof file not found." });
+  }
+
+  const safeName = path.basename(String(submission.file.storedName));
+  const filePath = path.join(dataDir, "private", "pop", safeName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: "Proof file is unavailable." });
+  }
+
+  res.setHeader("Content-Type", submission.file.fileType || "application/octet-stream");
+  res.setHeader("Content-Disposition", "inline");
+  res.setHeader("Cache-Control", "private, no-store");
+  res.sendFile(filePath);
+});
+
+app.post("/api/admin/orders/:id/pop-whatsapp", requireAdmin, requirePermission("pop:review"), (req, res) => {
+  const orders = read("orders", []);
+  const order = orders.find(o =>
+    String(o.id) === String(req.params.id) ||
+    String(o.orderNumber) === String(req.params.id)
+  );
+
+  if (!order) {
+    return res.status(404).json({ success: false, message: "Order not found." });
+  }
+
+  const createdAt = new Date().toISOString();
+  const submissions = read("popSubmissions", []);
+
+  const submission = {
+    id: uuid(),
+    kind: "order",
+    reference: order.orderNumber,
+    contact: order.customer?.email || order.customer?.phone || "",
+    note: String(req.body?.note || "Proof of payment received via WhatsApp."),
+    file: null,
+    channel: "whatsapp",
+    status: "submitted",
+    createdAt,
+    updatedAt: createdAt
+  };
+
+  submissions.unshift(submission);
+  write("popSubmissions", submissions);
+
+  const updatedOrder = orderService.updateOrder(order.id, {
+    paymentStatus: "pop_submitted",
+    orderStatus: "pop_submitted",
+    popChannel: "whatsapp",
+    popReceivedAt: createdAt
+  }, req.user);
+
+  ok(res, { submission, order: updatedOrder });
+});
+
+
 app.get("/api/admin/pop-submissions", requireAdmin, requirePermission("pop:review"), (req, res) => ok(res, { submissions: read("popSubmissions", []) }));
 app.post("/api/admin/pop-submissions/:id/review", requireAdmin, requirePermission("pop:review"), (req, res) => {
   const submission = orderService.reviewPop(req.params.id, req.body.status || "under_review", req.user);

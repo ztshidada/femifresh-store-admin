@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const { v4: uuid } = require("uuid");
 const { read, write } = require("../db");
 const { hashPassword, comparePassword, newToken, publicAffiliate } = require("./authService");
-const { paymentInstructions } = require("./settingsService");
+const { paymentInstructions, getSettings } = require("./settingsService");
 const { createNotification } = require("./notificationService");
 
 function now() {
@@ -71,8 +71,12 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
   const directs = directReferrals(affiliate, affiliates);
   const activeDirects = directs.filter(a => affiliateActive(a, month));
   const selfActive = affiliateActive(affiliate, month);
-  const referralBonusCounted = activeDirects.length * 300;
-  const targetBonusCounted = activeDirects.length >= 10 ? 1000 : 0;
+  const commission = getSettings().commission || {};
+  const referralBonusPerActiveDirect = Number(commission.referralBonusPerActiveDirect ?? 300);
+  const targetActiveDirects = Math.max(1, Number(commission.targetActiveDirects ?? 10));
+  const targetBonusAmount = Number(commission.targetBonusAmount ?? 1000);
+  const referralBonusCounted = activeDirects.length * referralBonusPerActiveDirect;
+  const targetBonusCounted = activeDirects.length >= targetActiveDirects ? targetBonusAmount : 0;
   const productCommissions = read("orders", [])
     .filter(o => String(o.referralCode || "").toUpperCase() === String(affiliate.referralCode || "").toUpperCase())
     .filter(o => String(o.paymentStatus || "").toLowerCase() === "paid")
@@ -98,7 +102,17 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
     totalPayable,
     totalBlocked,
     blockedReason,
-    needsForTarget: Math.max(0, 10 - activeDirects.length)
+    referralBonusPerActiveDirect,
+    targetActiveDirects,
+    targetBonusAmount,
+    needsForTarget: Math.max(0, targetActiveDirects - activeDirects.length),
+    targetBonusProgress: {
+      current: activeDirects.length,
+      required: targetActiveDirects,
+      remaining: Math.max(0, targetActiveDirects - activeDirects.length),
+      amount: targetBonusAmount,
+      status: activeDirects.length >= targetActiveDirects ? "qualified" : "pending"
+    }
   };
 }
 
@@ -124,11 +138,17 @@ function onboardingChecklist(affiliate) {
 function registerAffiliate(input) {
   const { firstName, lastName, phone, email, password, sponsorCode = "" } = input || {};
   if (!firstName || !lastName || !phone || !email || !password) throw new Error("Please complete all required fields.");
+  if (!String(sponsorCode || "").trim()) throw new Error("Sponsor code is required.");
   const affiliates = read("affiliates", []);
   if (affiliates.some(a => String(a.email || "").toLowerCase() === String(email).toLowerCase())) {
     throw new Error("This email already has an affiliate account.");
   }
-  const sponsor = sponsorCode ? affiliates.find(a => String(a.referralCode || "").toUpperCase() === String(sponsorCode).toUpperCase()) : null;
+  const sponsor = affiliates.find(a =>
+    String(a.referralCode || "").toUpperCase() === String(sponsorCode).trim().toUpperCase()
+  );
+
+  if (!sponsor) throw new Error("Please enter a valid sponsor code.");
+
   const referralCode = makeUniqueCode(firstName, lastName, affiliates);
   const affiliate = {
     id: uuid(),

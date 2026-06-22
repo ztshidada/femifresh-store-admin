@@ -148,7 +148,17 @@ function updateOrder(id, patch, actor = {}) {
   const order = orders.find(o => [o.id, o.orderNumber].map(String).includes(String(id)));
   if (!order) return null;
 
-  const allowed = ["paymentStatus", "orderStatus", "fulfillmentStatus", "trackingNumber", "adminNote", "returnStatus", "refundStatus"];
+  const allowed = [
+    "paymentStatus",
+    "orderStatus",
+    "fulfillmentStatus",
+    "trackingNumber",
+    "adminNote",
+    "returnStatus",
+    "refundStatus",
+    "popChannel",
+    "popReceivedAt"
+  ];
   for (const key of allowed) {
     if (patch[key] !== undefined) order[key] = patch[key];
   }
@@ -205,6 +215,7 @@ function submitPop({ kind = "order", reference, contact = "", note = "", fileNam
     contact,
     note,
     file,
+    channel: file ? "website_upload" : "website_reference",
     status: "submitted",
     createdAt: now(),
     updatedAt: now()

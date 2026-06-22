@@ -52,6 +52,20 @@
           ${stat("Payable", money(data.stats.totalPayable))}
         </section>
         <section class="ff-card ff-stack">
+          <div class="ff-row ff-wrap">
+            <div>
+              <p class="ff-eyebrow" style="color:#68235f">Target Bonus Progress</p>
+              <h2>${esc(String(data.stats.targetBonusProgress?.current ?? 0))} / ${esc(String(data.stats.targetBonusProgress?.required ?? 10))} Active Direct Referrals</h2>
+              <p class="ff-muted">${data.stats.targetBonusProgress?.status === "qualified" ? "You have qualified for the target bonus." : "You need " + String(data.stats.targetBonusProgress?.remaining ?? 10) + " more active direct referral(s)."}</p>
+            </div>
+            <div>
+              ${badge(data.stats.targetBonusProgress?.status || "pending")}
+              <p><strong>Target Bonus: ${money(data.stats.targetBonusProgress?.amount || 0)}</strong></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="ff-card ff-stack">
           <h2>Referral Tools</h2>
           <div class="ff-input">${esc(data.referralLink)}</div>
           <div class="ff-row ff-wrap">
