@@ -83,6 +83,13 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
       String(affiliate.referralCode || "").toUpperCase()
     )
     .filter(order => String(order.paymentStatus || "").toLowerCase() === "paid")
+    .filter(order => {
+      const paidDate = new Date(order.paidAt || order.createdAt || 0);
+
+      if (Number.isNaN(paidDate.getTime())) return false;
+
+      return paidDate.toISOString().slice(0, 7) === month;
+    })
     .reduce((sum, order) => {
       return sum + (order.items || []).reduce((itemSum, item) => {
         const quantity = Math.max(1, Number(item.qty || item.quantity || 1));
