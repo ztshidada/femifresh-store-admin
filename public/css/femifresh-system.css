@@ -114,6 +114,11 @@ img { max-width: 100%; display: block; }
 .ff-product-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--ff-radius); background: var(--ff-pink-100); }
 .ff-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ff-wrap { flex-wrap: wrap; }
+.ff-line-item { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.ff-line-item.compact { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; }
+.ff-thumb { width: 72px; height: 72px; border-radius: var(--ff-radius); object-fit: cover; background: var(--ff-pink-100); border: 1px solid var(--ff-line); }
+.ff-line-item.compact .ff-thumb { width: 56px; height: 56px; }
+.ff-pop-preview { width: min(100%, 420px); max-height: 380px; object-fit: contain; border: 1px solid var(--ff-line); border-radius: var(--ff-radius); background: white; }
 
 .ff-btn {
   display: inline-flex;
@@ -210,11 +215,42 @@ img { max-width: 100%; display: block; }
 .ff-hidden { display: none !important; }
 
 .ff-print-slip { display: none; }
+.ff-footer { margin-top: 56px; padding: 34px 0; border-top: 1px solid var(--ff-line); background: rgba(255,255,255,.72); }
+.ff-footer-inner { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 24px; align-items: start; }
+.ff-footer p { margin: 8px 0 0; }
+.ff-footer strong { color: var(--ff-purple-900); }
+.ff-slip {
+  color: #211225;
+  background: white;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.ff-slip-header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; border-bottom: 2px solid var(--ff-purple); padding-bottom: 12px; margin-bottom: 12px; }
+.ff-slip-brand { display: flex; gap: 12px; align-items: center; }
+.ff-slip-brand img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+.ff-slip-title { margin: 0; color: var(--ff-purple-900); font-size: 25px; line-height: 1.05; }
+.ff-slip-meta { text-align: right; display: grid; gap: 4px; }
+.ff-slip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.ff-slip-box { border: 1px solid #e6d6e6; border-radius: 8px; padding: 10px; break-inside: avoid; }
+.ff-slip-box h3 { margin: 0 0 6px; font-size: 13px; color: var(--ff-purple); }
+.ff-slip-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.ff-slip-table th { text-align: left; background: #fff1fa; color: var(--ff-purple); padding: 7px; border-bottom: 1px solid #e6d6e6; font-size: 10px; text-transform: uppercase; }
+.ff-slip-table td { padding: 7px; border-bottom: 1px solid #eee4ee; vertical-align: middle; }
+.ff-slip-thumb { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; border: 1px solid #eaddea; }
+.ff-slip-totals { margin-left: auto; width: min(280px, 100%); display: grid; gap: 5px; padding-top: 10px; }
+.ff-slip-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+.ff-slip-line { border-top: 1px solid #3d243f; padding-top: 5px; color: #513555; }
+.ff-slip-support { margin-top: 12px; padding-top: 10px; border-top: 1px solid #e6d6e6; color: #513555; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 @media print {
+  @page { size: A4; margin: 10mm; }
+  html, body { background: white !important; }
   body * { visibility: hidden; }
   .ff-print-slip, .ff-print-slip * { visibility: visible; }
-  .ff-print-slip { display: block; position: absolute; inset: 0; padding: 24px; }
+  .ff-print-slip { display: block; position: absolute; inset: 0; padding: 0; box-shadow: none; }
+  .ff-sidebar, .ff-toolbar, .ff-toast-region, .ff-modal-backdrop { display: none !important; }
+  .ff-slip { page-break-after: avoid; break-after: avoid; }
+  .ff-slip-box, .ff-slip-table tr { break-inside: avoid; page-break-inside: avoid; }
 }
 
 @media (max-width: 920px) {
@@ -227,6 +263,9 @@ img { max-width: 100%; display: block; }
   .ff-sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ff-admin-main { padding: 22px 16px; }
   .ff-row { align-items: flex-start; flex-direction: column; }
+  .ff-line-item { grid-template-columns: 64px minmax(0, 1fr); }
+  .ff-line-item > strong, .ff-line-item > .ff-row { grid-column: 2; }
+  .ff-footer-inner { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 560px) {

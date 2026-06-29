@@ -33,7 +33,14 @@
     if (["paid","fulfilled","delivered","approved","active","packed"].some(x => s.includes(x))) cls = "green";
     if (["failed","cancelled","refunded","blocked","out"].some(x => s.includes(x))) cls = "red";
     if (["pending","review","new","submitted","packing"].some(x => s.includes(x))) cls = "amber";
-    return `<span class="ff-badge ${cls}">${esc(value || "--")}</span>`;
+    const labels = {
+      pop_submitted: "POP Submitted",
+      under_review: "Under Review",
+      out_of_stock: "Out of Stock",
+      tracking_added: "Tracking Added"
+    };
+    const label = labels[s] || String(value || "--").replace(/_/g, " ").replace(/\b\w/g, ch => ch.toUpperCase());
+    return `<span class="ff-badge ${cls}">${esc(label)}</span>`;
   }
   function confirmModal({ title="Confirm", message="", confirmText="Confirm", danger=false } = {}){
     return new Promise(resolve => {
@@ -68,7 +75,32 @@
       reader.readAsDataURL(file);
     });
   }
+  function footer(){
+    if (document.body.dataset.adminPage || qs(".ff-footer")) return;
+    const el = document.createElement("footer");
+    el.className = "ff-footer";
+    el.innerHTML = `
+      <div class="ff-container ff-footer-inner">
+        <div>
+          <a class="ff-brand" href="/"><img src="/images/femifresh-logo.jpg" alt="">FemiFresh</a>
+          <p class="ff-muted">Fresh care, clear orders, stronger distributors.</p>
+        </div>
+        <div>
+          <strong>Support</strong>
+          <p><a href="/contact">Contact</a></p>
+          <p><a href="/track-order">Track Order</a></p>
+          <p><a href="/returns">Returns</a></p>
+        </div>
+        <div>
+          <strong>Distributors</strong>
+          <p><a href="/join">Become a Distributor</a></p>
+          <p><a href="/affiliate-login">Distributor Login</a></p>
+          <p><a href="/products">Buy Products</a></p>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+  }
 
-  window.Femi = { money, qs, qsa, esc, api, toast, badge, confirmModal, initNav, fileToData };
-  document.addEventListener("DOMContentLoaded", initNav);
+  window.Femi = { money, qs, qsa, esc, api, toast, badge, confirmModal, initNav, fileToData, footer };
+  document.addEventListener("DOMContentLoaded", () => { initNav(); footer(); });
 })();

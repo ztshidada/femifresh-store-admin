@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuid } = require("uuid");
 const { read, write, dataDir } = require("../db");
-const { validateCartItems, adjustStock } = require("./productService");
+const { validateCartItems, adjustStock, orderItemSnapshot } = require("./productService");
 const { getSettings, paymentInstructions } = require("./settingsService");
 const { createNotification } = require("./notificationService");
 
@@ -73,7 +73,10 @@ function calculateOrder(items, input = {}) {
 
 function publicOrder(order) {
   if (!order) return null;
-  return order;
+  return {
+    ...order,
+    items: (order.items || []).map(orderItemSnapshot)
+  };
 }
 
 function findOrderByReference(reference) {
@@ -141,6 +144,10 @@ function createOrder(input) {
   });
 
   return order;
+}
+
+function hydrateOrders(orders = []) {
+  return orders.map(publicOrder);
 }
 
 function updateOrder(id, patch, actor = {}) {
@@ -278,6 +285,8 @@ module.exports = {
   paymentStatuses,
   calculateOrder,
   createOrder,
+  publicOrder,
+  hydrateOrders,
   updateOrder,
   findOrderByReference,
   trackOrder,

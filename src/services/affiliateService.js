@@ -106,6 +106,12 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
   const targetBonusCounted = activeDirects.length >= targetActiveDirects
     ? targetBonusAmount
     : 0;
+  const targetBonusPaid = read("payoutHistory", []).some(p =>
+    String(p.affiliateId || "") === String(affiliate.id || "") &&
+    String(p.month || "") === String(month || "") &&
+    String(p.status || "").toLowerCase() === "paid" &&
+    Number(p.amount || 0) >= targetBonusAmount
+  );
 
   const totalCounted = productCommissions + targetBonusCounted;
   const payoutBlocked = affiliate.payoutBlocked === true;
@@ -142,7 +148,7 @@ function calculateCommission(affiliate, affiliates, month = monthKey()) {
       required: targetActiveDirects,
       remaining: Math.max(0, targetActiveDirects - activeDirects.length),
       amount: targetBonusAmount,
-      status: activeDirects.length >= targetActiveDirects ? "qualified" : "pending"
+      status: targetBonusPaid ? "paid" : (activeDirects.length >= targetActiveDirects ? "qualified" : "pending")
     }
   };
 }

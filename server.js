@@ -263,7 +263,7 @@ app.post("/api/customer/login", (req, res) => {
   ok(res, { customer: publicCustomer(row), token: row.token });
 });
 app.get("/api/customer/me", requireCustomer, (req, res) => ok(res, { customer: publicCustomer(req.customer) }));
-app.get("/api/customer/orders", requireCustomer, (req, res) => ok(res, { orders: read("orders", []).filter(o => String(o.customer?.email || "").toLowerCase() === String(req.customer.email || "").toLowerCase()) }));
+app.get("/api/customer/orders", requireCustomer, (req, res) => ok(res, { orders: orderService.hydrateOrders(read("orders", []).filter(o => String(o.customer?.email || "").toLowerCase() === String(req.customer.email || "").toLowerCase())) }));
 app.get("/api/customer/notifications", requireCustomer, (req, res) => ok(res, { notifications: notificationService.listNotifications({ audience: "customer", userId: req.customer.id }) }));
 
 app.post("/api/affiliate/register", (req, res) => {
@@ -326,7 +326,7 @@ app.get("/api/admin/dashboard", requireAdmin, requirePermission("dashboard:read"
 app.get("/api/admin/analytics", requireAdmin, requireRole("super_admin"), (req, res) => ok(res, { analytics: opsService.analytics() }));
 app.get("/api/admin/fraud-flags", requireAdmin, requireRole("super_admin"), (req, res) => ok(res, { flags: opsService.fraudFlags() }));
 
-app.get("/api/admin/orders", requireAdmin, requirePermission("orders:read"), (req, res) => ok(res, { orders: read("orders", []) }));
+app.get("/api/admin/orders", requireAdmin, requirePermission("orders:read"), (req, res) => ok(res, { orders: orderService.hydrateOrders(read("orders", [])) }));
 app.patch("/api/admin/orders/:id", requireAdmin, requirePermission("orders:update"), (req, res) => {
   const order = orderService.updateOrder(req.params.id, req.body || {}, req.user);
   if (!order) return res.status(404).json({ success: false, message: "Order not found." });
@@ -562,7 +562,7 @@ app.post("/api/admin/payouts", requireAdmin, requireRole("super_admin"), (req, r
 app.get("/api/admin/payouts", requireAdmin, requireRole("super_admin"), (req, res) => ok(res, { payouts: read("payoutHistory", []) }));
 app.get("/api/admin/distributor-bank-details", requireAdmin, requireRole("super_admin"), (req, res) => ok(res, { affiliates: adminAffiliateList(true).map(a => ({ id: a.id, fullName: a.fullName, email: a.email, referralCode: a.referralCode, bankDetails: a.bankDetails || {} })) }));
 
-app.get("/api/admin/limited/orders", requireAdmin, requirePermission("orders:read"), requireOrderOps, (req, res) => ok(res, { orders: read("orders", []) }));
+app.get("/api/admin/limited/orders", requireAdmin, requirePermission("orders:read"), requireOrderOps, (req, res) => ok(res, { orders: orderService.hydrateOrders(read("orders", [])) }));
 app.post("/api/admin/limited/orders/:id/paid", requireAdmin, requirePermission("orders:update"), requireOrderOps, (req, res) => ok(res, { order: orderService.updateOrder(req.params.id, { paymentStatus: "paid", orderStatus: "paid" }, req.user) }));
 app.post("/api/admin/limited/orders/:id/fulfilled", requireAdmin, requirePermission("orders:update"), requireOrderOps, (req, res) => ok(res, { order: orderService.updateOrder(req.params.id, { fulfillmentStatus: "fulfilled", orderStatus: "fulfilled" }, req.user) }));
 app.get("/api/admin/limited/joining-fees", requireAdmin, requirePermission("joining_fees:read"), requireOrderOps, (req, res) => ok(res, { affiliates: affiliateService.pendingJoiningFees().map(a => publicAffiliate(a)) }));

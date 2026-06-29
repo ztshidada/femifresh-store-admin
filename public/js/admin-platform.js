@@ -74,6 +74,55 @@
   }
 
   function stat(label, value){ return `<div class="ff-card ff-stat"><span class="ff-muted">${esc(label)}</span><strong>${esc(value)}</strong></div>`; }
+  function itemImage(item){ return item.image || item.imageUrl || "/images/femifresh-logo.jpg"; }
+  function qty(item){ return Number(item.qty || item.quantity || 1); }
+  function unitPrice(item){ return Number(item.unitPrice ?? item.price ?? 0); }
+  function lineTotal(item){ return Number(item.lineTotal ?? item.subtotal ?? (unitPrice(item) * qty(item))); }
+  function adminLineItem(item){
+    return `<div class="ff-line-item compact">
+      <img class="ff-thumb" src="${esc(itemImage(item))}" alt="${esc(item.name || "FemiFresh product")}">
+      <div><strong>${esc(item.name || "FemiFresh product")}</strong><p class="ff-muted">${qty(item)} x ${money(unitPrice(item))}</p></div>
+      <strong>${money(lineTotal(item))}</strong>
+    </div>`;
+  }
+  function packingSlip(o){
+    const items = o.items || [];
+    const customerAddress = o.customer?.address || o.deliveryAddress || "";
+    return `<section class="ff-print-slip">
+      <div class="ff-slip">
+        <header class="ff-slip-header">
+          <div class="ff-slip-brand">
+            <img src="/images/femifresh-logo.jpg" alt="FemiFresh">
+            <div><h1 class="ff-slip-title">FemiFresh Packing Slip</h1><strong>Fresh care, clear orders.</strong></div>
+          </div>
+          <div class="ff-slip-meta">
+            <strong>${esc(o.orderNumber || "")}</strong>
+            <span>Date: ${esc((o.createdAt || "").slice(0, 10))}</span>
+            <span>Payment: ${esc(o.paymentStatus || "pending")}</span>
+            <span>Fulfilment: ${esc(o.fulfillmentStatus || o.orderStatus || "new")}</span>
+            <span>Tracking: ${esc(o.trackingNumber || "Not added")}</span>
+          </div>
+        </header>
+        <div class="ff-slip-grid">
+          <div class="ff-slip-box"><h3>Customer</h3><strong>${esc(o.customer?.name || "")}</strong><br>${esc(o.customer?.phone || "")}<br>${esc(o.customer?.email || "")}</div>
+          <div class="ff-slip-box"><h3>Delivery</h3>${esc(customerAddress).replace(/\n/g, "<br>")}<br><strong>${esc(o.delivery?.name || "Delivery method not set")}</strong></div>
+        </div>
+        <table class="ff-slip-table">
+          <thead><tr><th>Item</th><th>Product</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+          <tbody>${items.map(i => `<tr><td><img class="ff-slip-thumb" src="${esc(itemImage(i))}" alt=""></td><td>${esc(i.name || "FemiFresh product")}</td><td>${qty(i)}</td><td>${money(unitPrice(i))}</td><td>${money(lineTotal(i))}</td></tr>`).join("")}</tbody>
+        </table>
+        <div class="ff-slip-totals">
+          <div class="ff-row"><span>Subtotal</span><strong>${money(o.subtotal || items.reduce((s, i) => s + lineTotal(i), 0))}</strong></div>
+          <div class="ff-row"><span>Delivery</span><strong>${money(o.delivery?.price || 0)}</strong></div>
+          ${o.discount?.amount ? `<div class="ff-row"><span>Discount</span><strong>-${money(o.discount.amount)}</strong></div>` : ""}
+          <div class="ff-row"><span>Total</span><strong>${money(o.total)}</strong></div>
+        </div>
+        ${o.adminNote ? `<div class="ff-slip-box"><h3>Admin Note</h3>${esc(o.adminNote)}</div>` : ""}
+        <div class="ff-slip-signatures"><div class="ff-slip-line">Packed by</div><div class="ff-slip-line">Checked by</div></div>
+        <footer class="ff-slip-support"><span>FemiFresh Support</span><span>WhatsApp: 0632180372</span><span>Email: femifresh02@gmail.com</span></footer>
+      </div>
+    </section>`;
+  }
 
   async function dashboard(){
     const root = await shell("Dashboard");
@@ -107,10 +156,10 @@
       <tr>
         <td><strong>${esc(o.orderNumber)}</strong><br><small>${esc(o.createdAt || "")}</small></td>
         <td>${esc(o.customer?.name || "")}<br><small>${esc(o.customer?.email || "")}<br>${esc(o.customer?.phone || "")}</small></td>
-        <td>${badge(o.paymentStatus)}</td>
+        <td>${badge(o.paymentStatus)} ${String(o.paymentStatus || "").toLowerCase() === "pop_submitted" || o.popReceivedAt ? badge("POP Submitted") : ""}</td>
         <td>${badge(o.orderStatus || o.fulfillmentStatus)}</td>
         <td><strong>${money(o.total)}</strong></td>
-        <td>${(o.items || []).map(i => `${esc(i.qty)}x ${esc(i.name)}`).join("<br>")}</td>
+        <td>${(o.items || []).map(i => `${esc(qty(i))}x ${esc(i.name)}`).join("<br>")}</td>
         <td><a class="ff-btn secondary" href="/admin/order-detail.html?id=${encodeURIComponent(o.id)}">Open</a></td>
       </tr>`);
     qs("#ordersTable").innerHTML = table(["Order","Customer","Payment","Status","Total","Items","Action"], rows);
@@ -158,12 +207,7 @@
           <p class="ff-muted">${esc(o.customer?.address || "")}</p>
 
           <h3>Items</h3>
-          ${(o.items || []).map(i => `
-            <div class="ff-row">
-              <span>${esc(i.qty)}x ${esc(i.name)}</span>
-              <strong>${money(i.subtotal)}</strong>
-            </div>
-          `).join("")}
+          <div class="ff-stack">${(o.items || []).map(adminLineItem).join("")}</div>
 
           <hr>
           <div class="ff-row">
@@ -209,16 +253,7 @@
         </div>
       </section>
 
-      <section class="ff-print-slip">
-        <h1>FemiFresh Packing Slip</h1>
-        <h2>${esc(o.orderNumber)}</h2>
-        <p>
-          ${esc(o.customer?.name || "")}<br>
-          ${esc(o.customer?.phone || "")}<br>
-          ${esc(o.customer?.address || "")}
-        </p>
-        ${(o.items || []).map(i => `<p>${esc(i.qty)}x ${esc(i.name)}</p>`).join("")}
-      </section>
+      ${packingSlip(o)}
     `;
 
     renderOrderPops(relatedPops);
@@ -273,6 +308,9 @@
                 <div>${badge(p.status || "submitted")}</div>
               </div>
 
+              <p><strong>Order number:</strong> ${esc(p.reference || "")}</p>
+              <p><strong>Customer:</strong> ${esc(p.contact || "Saved on order")}</p>
+              <p><strong>Uploaded:</strong> ${esc(p.createdAt || "")}</p>
               <p><strong>Customer note:</strong> ${esc(p.note || "No note added.")}</p>
               ${preview}
               ${approveButton}
@@ -343,7 +381,7 @@
     const data = await api("/api/admin/products");
     root.innerHTML = `
       <section class="ff-card"><h2>Add / Update Product</h2>${productForm()}</section>
-      <section class="ff-card"><h2>Products</h2>${table(["Name","Price","Referral Bonus","Stock","Status","Action"], data.products.map(p => `<tr><td>${esc(p.name)}</td><td>${money(p.price)}</td><td>${money(p.commissionRules?.directReferralCommission || 0)}</td><td>${p.stock}</td><td>${badge(p.available ? "Active" : "Out of stock")}</td><td><button class="ff-btn secondary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button></td></tr>`))}</section>`;
+      <section class="ff-card"><h2>Products</h2>${table(["Name","Price","Referral Bonus","Level Commission","Stock","Status","Action"], data.products.map(p => `<tr><td>${esc(p.name)}</td><td>${money(p.price)}</td><td>${money(p.commissionRules?.directReferralCommission || 0)}</td><td>${money(p.commissionRules?.levelCommission || 0)}</td><td>${p.stock}</td><td>${badge(p.available ? "Active" : "Out of stock")}</td><td><button class="ff-btn secondary" onclick='editProduct(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button></td></tr>`))}</section>`;
     bindProductForm();
   }
   function productForm(p={}){
@@ -354,7 +392,14 @@
       <div class="ff-grid two"><label class="ff-field">Price<input name="price" type="number" value="${esc(p.price || "")}" required></label><label class="ff-field">Stock<input name="stock" type="number" value="${esc(p.stock ?? "")}" required></label></div>
       <label class="ff-field">Image<input name="image" value="${esc(p.image || "")}"></label>
       <label class="ff-field">Description<textarea name="description">${esc(p.description || "")}</textarea></label>
-      <label class="ff-field">Direct Referral Commission<input name="directReferralCommission" type="number" value="${esc(p.commissionRules?.directReferralCommission || "")}"></label>
+      <div class="ff-grid two">
+        <label class="ff-field">Direct Referral Commission<input name="directReferralCommission" type="number" value="${esc(p.commissionRules?.directReferralCommission || "")}"></label>
+        <label class="ff-field">Level Commission<input name="levelCommission" type="number" value="${esc(p.commissionRules?.levelCommission || "")}"></label>
+      </div>
+      <div class="ff-grid two">
+        <label class="ff-field">Product Active<select name="active"><option value="true" ${p.active === false ? "" : "selected"}>Active</option><option value="false" ${p.active === false ? "selected" : ""}>Inactive</option></select></label>
+        <label class="ff-field">Stock Status<select name="outOfStock"><option value="false" ${p.outOfStock ? "" : "selected"}>In stock</option><option value="true" ${p.outOfStock ? "selected" : ""}>Out of stock</option></select></label>
+      </div>
       <button class="ff-btn">Save Product</button>
     </form>`;
   }
@@ -364,8 +409,15 @@
       const fd = new FormData(e.target);
       const id = fd.get("id");
       const body = Object.fromEntries(fd.entries());
-      body.commissionRules = { directReferralCommission: Number(body.directReferralCommission || 0) };
+      body.active = body.active !== "false";
+      body.outOfStock = body.outOfStock === "true";
+      body.status = body.active ? (body.outOfStock ? "out_of_stock" : "active") : "archived";
+      body.commissionRules = {
+        directReferralCommission: Number(body.directReferralCommission || 0),
+        levelCommission: Number(body.levelCommission || 0)
+      };
       delete body.directReferralCommission;
+      delete body.levelCommission;
       try { await api(id ? "/api/admin/products/" + encodeURIComponent(id) : "/api/admin/products", { method: id ? "PATCH" : "POST", body: JSON.stringify(body) }); toast("Product saved."); products(); }
       catch(err){ toast(err.message, "error"); }
     });

@@ -24,6 +24,16 @@ function normalizeProduct(product) {
   };
 }
 
+function comparable(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(femifresh|full|half|stock|package|pack|product)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function allProducts({ includeInactive = false } = {}) {
   const products = read("products", []).map(normalizeProduct);
   return includeInactive ? products : products.filter(p => p.active !== false);
@@ -35,6 +45,60 @@ function publicProducts() {
 
 function findProduct(id) {
   return allProducts({ includeInactive: true }).find(p => String(p.id) === String(id) || String(p.slug || "") === String(id)) || null;
+}
+
+function resolveProductSnapshot(item = {}) {
+  const products = allProducts({ includeInactive: true });
+  const rawKeys = [
+    item.productId,
+    item.id,
+    item.sku,
+    item.slug,
+    item.productSlug
+  ].filter(Boolean).map(v => String(v).toLowerCase());
+
+  let product = products.find(p => {
+    const productKeys = [p.id, p.sku, p.slug].filter(Boolean).map(v => String(v).toLowerCase());
+    return rawKeys.some(key => productKeys.includes(key));
+  });
+
+  if (!product) {
+    const itemName = comparable(item.name || item.title || item.productName);
+    product = products.find(p => {
+      const productName = comparable(p.name || p.title);
+      return itemName && productName && (productName === itemName || productName.includes(itemName) || itemName.includes(productName));
+    });
+  }
+
+  return product || null;
+}
+
+function orderItemSnapshot(item = {}) {
+  const product = resolveProductSnapshot(item) || {};
+  const quantity = Math.max(1, Number(item.qty || item.quantity || 1));
+  const unitPrice = Number(item.unitPrice ?? item.price ?? product.price ?? 0);
+  const lineTotal = Number(item.lineTotal ?? item.subtotal ?? (unitPrice * quantity));
+  const image = item.image || item.imageUrl || product.image || "/images/femifresh-logo.jpg";
+  const commissionRules = item.commissionRules || product.commissionRules || {};
+  const directReferralCommission = Number(item.directReferralCommission ?? commissionRules.directReferralCommission ?? 0);
+  return {
+    ...item,
+    productId: item.productId || product.id || item.id || "",
+    sku: item.sku || product.sku || "",
+    slug: item.slug || product.slug || "",
+    name: item.name || product.name || "FemiFresh product",
+    qty: quantity,
+    quantity,
+    price: unitPrice,
+    unitPrice,
+    subtotal: lineTotal,
+    lineTotal,
+    image,
+    imageUrl: image,
+    commissionRules,
+    directReferralCommission,
+    directReferralCommissionTotal: Number(item.directReferralCommissionTotal ?? (directReferralCommission * quantity))
+  };
 }
 
 function validateCartItems(items) {
@@ -50,16 +114,18 @@ function validateCartItems(items) {
     if (qty > Number(product.stock || 0)) {
       throw new Error(`Only ${product.stock} of ${product.name} is available.`);
     }
-    return {
+    return orderItemSnapshot({
       productId: product.id,
+      sku: product.sku || "",
+      slug: product.slug || "",
       name: product.name,
-      price: Number(product.price || 0),
-      qty,
-      subtotal: Number(product.price || 0) * qty,
+      unitPrice: Number(product.price || 0),
+      quantity: qty,
+      lineTotal: Number(product.price || 0) * qty,
       image: product.image || "",
       commissionRules: product.commissionRules || {},
       directReferralCommission: Number(product.commissionRules?.directReferralCommission || 0)
-    };
+    });
   });
 }
 
@@ -236,6 +302,8 @@ module.exports = {
   allProducts,
   publicProducts,
   findProduct,
+  resolveProductSnapshot,
+  orderItemSnapshot,
   validateCartItems,
   adjustStock,
   lowStockProducts,

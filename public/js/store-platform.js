@@ -27,6 +27,33 @@
 
   window.FemiCart = cart;
 
+  function itemImage(item){
+    return item.image || item.imageUrl || "/images/femifresh-logo.jpg";
+  }
+
+  function lineItem(item, { compact=false, removable=false, controls=false } = {}){
+    const qty = Number(item.qty || item.quantity || 1);
+    const price = Number(item.price ?? item.unitPrice ?? 0);
+    const total = Number(item.subtotal ?? item.lineTotal ?? (price * qty));
+    return `
+      <div class="ff-line-item ${compact ? "compact" : ""}">
+        <img class="ff-thumb" src="${esc(itemImage(item))}" alt="${esc(item.name || "FemiFresh product")}">
+        <div>
+          <strong>${esc(item.name || "FemiFresh product")}</strong>
+          <p class="ff-muted">${qty} x ${money(price)}</p>
+          ${controls ? `<div class="ff-row ff-wrap" style="justify-content:flex-start">
+            <button class="ff-btn secondary" onclick="FemiCart.qty('${esc(item.productId)}', ${qty - 1})">-</button>
+            <strong>${qty}</strong>
+            <button class="ff-btn secondary" onclick="FemiCart.qty('${esc(item.productId)}', ${qty + 1})">+</button>
+          </div>` : ""}
+        </div>
+        <div class="ff-stack" style="gap:8px;justify-items:end">
+          <strong>${money(total)}</strong>
+          ${removable ? `<button class="ff-btn ghost" onclick="FemiCart.remove('${esc(item.productId)}')">Remove</button>` : ""}
+        </div>
+      </div>`;
+  }
+
   function productCard(p){
     return `
       <article class="ff-card ff-product-card">
@@ -84,18 +111,7 @@
     const items = cart.get();
     if (list) {
       list.innerHTML = items.length ? items.map(i => `
-        <article class="ff-card compact">
-          <div class="ff-row ff-wrap">
-            <div><strong>${esc(i.name)}</strong><p class="ff-muted">${money(i.price)} each</p></div>
-            <div class="ff-row">
-              <button class="ff-btn secondary" onclick="FemiCart.qty('${esc(i.productId)}', ${Number(i.qty)-1})">-</button>
-              <strong>${Number(i.qty)}</strong>
-              <button class="ff-btn secondary" onclick="FemiCart.qty('${esc(i.productId)}', ${Number(i.qty)+1})">+</button>
-            </div>
-            <strong>${money(Number(i.price)*Number(i.qty))}</strong>
-            <button class="ff-btn ghost" onclick="FemiCart.remove('${esc(i.productId)}')">Remove</button>
-          </div>
-        </article>`).join("") : `<div class="ff-empty">Your cart is empty. <a href="/products"><strong>Shop products</strong></a>.</div>`;
+        <article class="ff-card compact">${lineItem(i, { controls:true, removable:true })}</article>`).join("") : `<div class="ff-empty">Your cart is empty. <a href="/products"><strong>Shop products</strong></a>.</div>`;
     }
     if (summary) {
       const subtotal = items.reduce((s,i)=>s+Number(i.price)*Number(i.qty),0);
@@ -124,7 +140,9 @@
     try {
       const data = await api("/api/orders/preview", { method:"POST", body: JSON.stringify({ items, deliveryMethodId: qs("#deliveryMethodId")?.value }) });
       el.innerHTML = `
-        ${data.totals.items.map(i => `<div class="ff-row"><span>${esc(i.name)} x ${i.qty}</span><strong>${money(i.subtotal)}</strong></div>`).join("")}
+        <div class="ff-stack">
+          ${data.totals.items.map(i => lineItem(i, { compact:true })).join("")}
+        </div>
         <hr>
         <div class="ff-row"><span>Subtotal</span><strong>${money(data.totals.subtotal)}</strong></div>
         <div class="ff-row"><span>${esc(data.totals.delivery.name)}</span><strong>${money(data.totals.delivery.price)}</strong></div>
@@ -163,11 +181,13 @@
     const last = JSON.parse(localStorage.getItem("ff_last_order") || "null");
     const orderNo = new URLSearchParams(location.search).get("order") || last?.orderNumber || "";
     const instructions = last?.paymentInstructions;
+    const items = last?.items || [];
     el.innerHTML = `
       <div class="ff-card ff-stack">
         <span>${badge(last?.paymentStatus || "pending")}</span>
         <h1 class="ff-page-title">Order received</h1>
         <p class="ff-lead">Your reference is <strong>${esc(orderNo)}</strong>. Please use this reference when sending proof of payment.</p>
+        ${items.length ? `<div class="ff-stack"><h2>Order Items</h2>${items.map(i => lineItem(i, { compact:true })).join("")}</div>` : ""}
         ${instructions ? paymentBox(instructions) : ""}
         <a class="ff-btn" href="/track-order?order=${encodeURIComponent(orderNo)}">Track Order</a>
       </div>`;
@@ -210,7 +230,13 @@
       e.preventDefault();
       try {
         const data = await api("/api/orders/track", { method:"POST", body: JSON.stringify(Object.fromEntries(new FormData(form).entries())) });
-        out.innerHTML = `<div class="ff-card ff-stack"><h2>${esc(data.order.orderNumber)}</h2>${badge(data.order.paymentStatus)} ${badge(data.order.orderStatus || data.order.fulfillmentStatus)}<p>${esc(data.order.customer.name)}</p><p>Tracking: <strong>${esc(data.order.trackingNumber || "Not added yet")}</strong></p></div>`;
+        out.innerHTML = `<div class="ff-card ff-stack">
+          <h2>${esc(data.order.orderNumber)}</h2>
+          <div>${badge(data.order.paymentStatus)} ${badge(data.order.orderStatus || data.order.fulfillmentStatus)}</div>
+          <p>${esc(data.order.customer.name)}</p>
+          <div class="ff-stack">${(data.order.items || []).map(i => lineItem(i, { compact:true })).join("")}</div>
+          <p>Tracking: <strong>${esc(data.order.trackingNumber || "Not added yet")}</strong></p>
+        </div>`;
       } catch(err) { out.innerHTML = `<div class="ff-empty">${esc(err.message)}</div>`; }
     });
   }
