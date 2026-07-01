@@ -77,26 +77,42 @@
   }
   function footer(){
     if (document.body.dataset.adminPage || qs(".ff-footer")) return;
+
     const el = document.createElement("footer");
     el.className = "ff-footer";
     el.innerHTML = `
       <div class="ff-container ff-footer-inner">
-        <div>
-          <a class="ff-brand" href="/"><img src="/images/femifresh-logo.jpg" alt="">FemiFresh</a>
+        <div class="ff-footer-brand">
+          <a class="ff-brand" href="/"><img src="/images/femifresh-logo.jpg" alt="FemiFresh logo">FemiFresh</a>
           <p class="ff-muted">Fresh care, clear orders, stronger distributors.</p>
+          <p class="ff-muted">Support via WhatsApp: <a href="https://wa.me/27632180372" target="_blank" rel="noopener">063 218 0372</a></p>
         </div>
+
         <div>
-          <strong>Support</strong>
-          <p><a href="/contact">Contact</a></p>
+          <strong>Shop & Support</strong>
+          <p><a href="/products">Shop Products</a></p>
           <p><a href="/track-order">Track Order</a></p>
-          <p><a href="/returns">Returns</a></p>
+          <p><a href="/contact">Contact Us</a></p>
+          <p><a href="/returns">Return Request</a></p>
         </div>
+
+        <div>
+          <strong>Policies</strong>
+          <p><a href="/terms">Terms & Conditions</a></p>
+          <p><a href="/delivery-policy">Delivery Policy</a></p>
+          <p><a href="/refund-policy">Refund & Returns Policy</a></p>
+        </div>
+
         <div>
           <strong>Distributors</strong>
           <p><a href="/join">Become a Distributor</a></p>
           <p><a href="/affiliate-login">Distributor Login</a></p>
-          <p><a href="/products">Buy Products</a></p>
         </div>
+      </div>
+
+      <div class="ff-container ff-footer-bottom">
+        <span>© ${new Date().getFullYear()} FemiFresh. All rights reserved.</span>
+        <span>Secure manual payment verification and order tracking.</span>
       </div>`;
     document.body.appendChild(el);
   }
